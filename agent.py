@@ -10,6 +10,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from streaming_fallback import StreamingFallback
 from tools import ALL_TOOLS, NEEDS_APPROVAL
+from tools.memory import profile_for_prompt
 from tools.settings import load_settings
 
 # A chave OPENROUTER_API_KEY fica no .env da pasta do projeto (um nível acima do backend)
@@ -42,6 +43,14 @@ Regras:
   Para mudar tema, cor da aura do robô ou o tamanho de "arquivo grande", use mudar_configuracao (só o que pediram).
   Para mostrar o histórico, a previsão ou as limpezas, use abrir_tela("graficos"); para as opções, abrir_tela("configuracoes").
   Se pedirem para explicar o app, como ele funciona ou um tour, chame iniciar_tour e responda com uma frase curta.
+- Plano do agente, em duas fases:
+  1. Se pedirem para "executar o plano do agente" (ou montar um plano), colete os dados (scan_disk; listar_duplicatas se
+     houver duplicatas; planejar_organizacao_downloads) e chame mostrar_plano com até 4 passos que valham a pena
+     (ex.: limpar o lixo, apagar duplicatas, marcar instaladores antigos para revisar, organizar o Downloads).
+     Depois de mostrar, NÃO execute nada.
+  2. Quando o usuário disser que pode executar o plano, faça os passos na ordem do plano, um de cada vez, com as
+     ferramentas de cada passo (as que apagam pedem permissão sozinhas). Se ele recusar um passo, siga para o próximo.
+     No fim, diga em poucas frases o que foi feito e quanto espaço foi liberado no total.
 - Para apagar arquivos OU pastas inteiras, use mover_para_lixeira com os caminhos completos (vão para a Lixeira,
   dá para restaurar). Para apagar uma pasta, passe o caminho completo da própria pasta, começando pela letra do disco
   (ex.: a pasta PDFs dentro de Downloads do usuário);
@@ -57,6 +66,12 @@ Regras:
   organizar_downloads e desfazer_organizacao: NÃO peça confirmação no texto,
   apenas chame a ferramenta. Se o usuário recusar, respeite e não tente de novo sem ele pedir.
 - Nunca diga que não tem permissão para apagar: você tem as ferramentas, e o usuário aprova na tela.
+- Peças e desempenho do PC (processador, placa-mãe, placa de vídeo, RAM, discos, Windows, temperaturas, se aguenta
+  um jogo ou programa, por que está lento): use ver_configuracao_pc e responda com base nos dados reais. Se a RAM estiver
+  rodando abaixo da velocidade do pente (ex.: pente DDR4 3200 a 2667 MHz), sugira ligar o XMP/DOCP na BIOS.
+- Memória de longo prazo: quando o usuário contar algo útil e duradouro sobre ele ou o PC (para que usa, preferências,
+  pastas importantes), chame lembrar com uma frase curta. Não anote coisas passageiras nem dados sensíveis.
+  Se ele perguntar sobre conversas anteriores, use buscar_memoria.
 """
 
 # Personalidade escolhida nas Configurações: uma regra de estilo a mais no fim das instruções
@@ -70,7 +85,7 @@ PERSONALITIES = {
 
 def build_system_prompt() -> str:
     style = PERSONALITIES.get(load_settings()["personalidade"], "")
-    return SYSTEM_PROMPT + (f"- {style}\n" if style else "")
+    return SYSTEM_PROMPT + (f"- {style}\n" if style else "") + profile_for_prompt()  # + o que ela lembra (Perfil.md)
 
 
 @dynamic_prompt

@@ -24,6 +24,7 @@ from langchain_openrouter import ChatOpenRouter
 from tools.cleanups import load_cleanups
 from tools.disk_stats import composition
 from tools.file_lists import file_list, preview_path
+from tools.memory import log_turn, memory_summary
 from tools.pc_health import pc_health
 from tools.report import month_summary
 from tools.folder_map import folder_map
@@ -72,6 +73,12 @@ def file_preview(caminho: str):
 def health_check():
     """Tela do fone do robô: CPU, GPU, RAM, armazenamento, temperatura e a nota de saúde do PC."""
     return pc_health()
+
+
+@app.get("/api/memoria")
+def memory():
+    """Tela Configurações: onde está a memória da Linnea, o que ela lembra e quantos dias de conversa."""
+    return memory_summary()
 
 
 @app.get("/api/composicao")
@@ -203,6 +210,14 @@ def summarize_tool_result(name: str, content: str) -> str:
             return f"{data['grupos_total']} grupos de duplicatas · {data['copias_extras_total']} cópias extras · {mb} MB desperdiçados"
         except (ValueError, KeyError):
             pass
+    if name == "ver_configuracao_pc":
+        try:
+            data = json.loads(content)
+            parts = data["pecas"]
+            gpu = parts["placa_de_video"][0]["modelo"] if parts.get("placa_de_video") else "?"
+            return f"{parts['processador']['modelo']} · {gpu} · {parts['memoria_ram']['total_gb']} GB de RAM · saúde {data['agora']['nota']}%"
+        except (ValueError, KeyError, IndexError):
+            pass
     if name == "olhar_pasta":
         try:
             data = json.loads(content)
@@ -292,7 +307,7 @@ def auto_approved(requests) -> bool:
     return load_settings()["cuidado"] == "lixo_sozinha" and all(r["name"] == "limpar_lixo" for r in requests)
 
 
-def agent_events(agent_input, config):
+def agent_events(agent_input, config, question=""):
     """Roda o agente (mensagem nova ou retomada depois da permissão) e gera os eventos SSE:
     - step:     um passo do ReAct (pensando, ação, resultado)
     - token:    um pedaço do texto da resposta
@@ -300,8 +315,10 @@ def agent_events(agent_input, config):
     - ui:       ação da Linnea na tela (destacar card, scan novo...)
     - approval: a Linnea quer mexer em arquivos e está esperando o usuário aprovar ou recusar
     - done:     fim (modelo que respondeu e ferramentas usadas)
-    - error:    algo deu errado (mensagem amigável)"""
+    - error:    algo deu errado (mensagem amigável)
+    No fim, grava uma linha da conversa na memória (question = a pergunta do usuário)."""
     tool_names, tools_used, model_used = {}, [], MODEL
+    reply = ""  # o texto da resposta, para a memória
     try:
         # Repete quando a permissão é dada automaticamente (nível de cuidado "pode limpar o lixo sozinha")
         while agent_input is not None:
@@ -310,6 +327,7 @@ def agent_events(agent_input, config):
             for mode, data in stream:
                 if mode == "custom":
                     if "token" in data:
+                        reply += data["token"]
                         yield sse("token", {"text": data["token"]})
                     elif "switch" in data:
                         yield sse("switch", {"model": data["switch"]})
@@ -333,6 +351,10 @@ def agent_events(agent_input, config):
                         for step in message_steps(message, tool_names):
                             if step.kind != "resposta":  # a resposta o usuário já vê chegando no chat
                                 yield sse("step", step.model_dump())
+        try:
+            log_turn(question or "(continuação depois da permissão)", reply, tools_used)
+        except OSError:
+            pass  # sem conseguir gravar a memória, a conversa continua normal
         yield sse("done", {"model": model_used, "tools_used": tools_used})
     except TooManyRequestsResponseError:
         yield sse("error", {"detail": "A IA está ocupada agora. Tente de novo em alguns segundos."})
@@ -347,7 +369,7 @@ def chat_stream(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Mensagem vazia.")
     config = {"configurable": {"thread_id": request.thread_id}}
     agent_input = {"messages": [{"role": "user", "content": request.message}]}
-    return StreamingResponse(agent_events(agent_input, config), media_type="text/event-stream")
+    return StreamingResponse(agent_events(agent_input, config, request.message), media_type="text/event-stream")
 
 
 class ResumeRequest(BaseModel):

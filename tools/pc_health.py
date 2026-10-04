@@ -16,6 +16,8 @@ import winreg
 from datetime import datetime
 from pathlib import Path
 
+from langchain.tools import tool
+
 from tools.disk_scan import GB, SYSTEM_DRIVE
 
 SCAN_FILE = Path(__file__).resolve().parent.parent / "data" / "scan.json"
@@ -146,6 +148,91 @@ def _score(cpu: int, ram: int, disk: int, cpu_temp, gpu_temp, junk_gb: float) ->
     score = max(score, 0)
     status = "Excelente" if score >= 85 else "Bom" if score >= 70 else "Atenção" if score >= 50 else "Crítico"
     return score, status, issues
+
+
+# Peças do PC pelo Windows (CIM). Demora uns 4 s, então guarda o resultado: as peças não mudam com o app aberto.
+HARDWARE_SCRIPT = r"""
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
+$cpu = Get-CimInstance Win32_Processor | Select-Object -First 1 Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed
+$board = Get-CimInstance Win32_BaseBoard | Select-Object -First 1 Manufacturer, Product
+$ram = @(Get-CimInstance Win32_PhysicalMemory | Select-Object Capacity, Speed, ConfiguredClockSpeed, Manufacturer, PartNumber)
+$gpu = @(Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM, DriverVersion)
+$disks = @(Get-PhysicalDisk | Select-Object FriendlyName, MediaType, Size, BusType)
+$os = Get-CimInstance Win32_OperatingSystem | Select-Object Caption, BuildNumber
+@{ cpu = $cpu; placa_mae = $board; ram = $ram; gpu = $gpu; discos = $disks; windows = $os } | ConvertTo-Json -Depth 4 -Compress
+"""
+_hardware_cache = None
+
+
+def hardware_info() -> dict:
+    """Processador, placa-mãe, memória (cada pente), placa de vídeo, discos e Windows."""
+    global _hardware_cache
+    if _hardware_cache is not None:
+        return _hardware_cache
+    raw = subprocess.run(
+        ["powershell", "-NoProfile", "-Command", HARDWARE_SCRIPT],
+        capture_output=True, text=True, encoding="utf-8", timeout=30, creationflags=subprocess.CREATE_NO_WINDOW,
+    ).stdout
+    data = json.loads(raw)
+    cpu, board, system = data["cpu"], data["placa_mae"], data["windows"]
+    sticks = [
+        {
+            "gb": round(stick["Capacity"] / GB),
+            "velocidade_atual_mhz": stick.get("ConfiguredClockSpeed") or stick.get("Speed"),
+            "fabricante": (stick.get("Manufacturer") or "").strip(),
+            "modelo": (stick.get("PartNumber") or "").strip(),  # às vezes traz a velocidade de fábrica (ex.: "DDR4 3200")
+        }
+        for stick in data["ram"]
+    ]
+    nvidia = _nvidia_details()
+    video = [
+        {"modelo": card["Name"], "memoria_gb": round((card.get("AdapterRAM") or 0) / GB, 1), "driver": card.get("DriverVersion")}
+        for card in data["gpu"]
+    ]
+    if nvidia:  # o nvidia-smi informa a memória certa (o Windows limita a 4 GB nesse campo)
+        video = [nvidia] + [card for card in video if card["modelo"] != nvidia["modelo"]]
+    _hardware_cache = {
+        "processador": {
+            "modelo": cpu["Name"].strip(),
+            "nucleos": cpu["NumberOfCores"],
+            "threads": cpu["NumberOfLogicalProcessors"],
+            "ghz": round(cpu["MaxClockSpeed"] / 1000, 1),
+        },
+        "placa_mae": f"{board['Manufacturer'].strip()} {board['Product'].strip()}",
+        "memoria_ram": {"total_gb": sum(s["gb"] for s in sticks), "pentes": sticks},
+        "placa_de_video": video,
+        "discos": [
+            {"modelo": disk["FriendlyName"].strip(), "tamanho_gb": round(disk["Size"] / 1e9), "tipo": disk["MediaType"], "conexao": disk["BusType"]}
+            for disk in data["discos"]
+        ],
+        "windows": f"{system['Caption']} (build {system['BuildNumber']})",
+    }
+    return _hardware_cache
+
+
+def _nvidia_details():
+    try:
+        line = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW,
+        ).stdout.strip().splitlines()[0]
+        name, memory_mb, driver = [part.strip() for part in line.split(",")]
+        return {"modelo": name, "memoria_gb": round(int(memory_mb) / 1024, 1), "driver": driver}
+    except (OSError, IndexError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+@tool
+def ver_configuracao_pc() -> str:
+    """Mostra a configuração do PC e como ele está agora: processador, placa-mãe, placa de vídeo, memória RAM
+    (cada pente e a velocidade em que está rodando), discos, versão do Windows, uso de CPU/GPU/RAM, temperaturas
+    e a nota de saúde. Só lê. Use quando perguntarem sobre as peças do PC, se ele aguenta um jogo ou programa,
+    o que dá para melhorar ou por que ele está lento."""
+    try:
+        hardware = hardware_info()
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError):
+        hardware = {"erro": "Não consegui ler as peças do PC agora."}
+    return json.dumps({"pecas": hardware, "agora": pc_health()}, ensure_ascii=False)
 
 
 def pc_health() -> dict:

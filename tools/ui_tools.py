@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Literal
 
 from langchain.tools import tool
+from pydantic import BaseModel, Field
 from langgraph.config import get_stream_writer
 
 from tools.disk_scan import scan
@@ -126,6 +127,29 @@ def marcar_arquivos(pasta: str, itens: list[str]) -> str:
     if missing:
         result += f" Não encontrei: {', '.join(missing)}."
     return result
+
+
+class PassoDoPlano(BaseModel):
+    titulo: str = Field(description="o que vai ser feito, curto (ex.: 'Limpar 2,1 GB de lixo')")
+    detalhe: str = Field(description="uma frase explicando (ex.: 'temporários antigos e a Lixeira')")
+    ferramenta: Literal["limpar_lixo", "apagar_duplicatas", "organizar_downloads", "marcar_arquivos", "mover_para_lixeira"] = Field(
+        description="a ferramenta que você vai usar para fazer este passo"
+    )
+    libera_mb: float = Field(description="quanto espaço este passo libera, em MB (0 se não libera, ex.: organizar)")
+
+
+@tool
+def mostrar_plano(passos: list[PassoDoPlano]) -> str:
+    """Mostra na tela o PLANO DO AGENTE: um cartão com até 4 passos de limpeza, cada um com quanto libera,
+    e os botões "Executar plano" e "Agora não". Use quando pedirem para executar o plano do agente ou montar um plano.
+    Antes, colete os dados (scan_disk; listar_duplicatas e planejar_organizacao_downloads se fizer sentido).
+    Ordene do passo que mais libera para o que menos libera. NÃO execute nada depois: espere o usuário clicar."""
+    steps = [step.model_dump() for step in passos[:4]]
+    _send_ui({"acao": "plano", "passos": steps, "descricao": f"montei um plano com {len(steps)} passo(s)"})
+    return (
+        "Plano mostrado na tela. Diga em uma frase quanto ele libera no total e espere: só execute quando o usuário "
+        "disser que pode executar o plano."
+    )
 
 
 @tool
