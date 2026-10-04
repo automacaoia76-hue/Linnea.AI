@@ -75,6 +75,35 @@ FILE_TYPES = {
 }
 
 
+def fixed_drives():
+    """Todos os discos fixos do PC (C:, E:...) com o espaço de cada um. sistema=True é o disco do Windows."""
+    import ctypes
+    import string
+
+    drives = []
+    mask = ctypes.windll.kernel32.GetLogicalDrives()  # um bit para cada letra que existe
+    for i, letter in enumerate(string.ascii_uppercase):
+        root = f"{letter}:{os.sep}"
+        if not (mask >> i) & 1 or ctypes.windll.kernel32.GetDriveTypeW(root) != 3:  # 3 = disco fixo (não pendrive/rede)
+            continue
+        label = ctypes.create_unicode_buffer(261)
+        ctypes.windll.kernel32.GetVolumeInformationW(root, label, 261, None, None, None, None, 0)
+        try:
+            usage = shutil.disk_usage(root)
+        except OSError:
+            continue
+        drives.append({
+            "unidade": f"{letter}:",
+            "nome": label.value,
+            "total_gb": round(usage.total / GB, 1),
+            "usado_gb": round(usage.used / GB, 1),
+            "livre_gb": round(usage.free / GB, 1),
+            "uso": round(100 * usage.used / usage.total),
+            "sistema": root.lower() == str(SYSTEM_DRIVE).lower(),
+        })
+    return drives
+
+
 def _file_type(path):
     ext = os.path.splitext(path)[1].lower()
     return FILE_TYPES.get(ext, f"Arquivo {ext[1:].upper()}" if ext else "Arquivo")
@@ -194,6 +223,7 @@ def scan(large_file_mb=100, time_limit_s=60):
             "livre_gb": round(usage.free / GB, 1),
             "unidade": str(SYSTEM_DRIVE),
         },
+        "discos": fixed_drives(),  # todos os discos (C:, E:...), não só o do Windows
         "lixo": {"tamanho_gb": round(junk_bytes / GB, 2), "pastas": [str(f) for f in JUNK_FOLDERS]},
         "duplicatas": {
             "tamanho_gb": round(wasted_bytes / GB, 2),
@@ -219,7 +249,8 @@ def scan(large_file_mb=100, time_limit_s=60):
 def scan_disk(large_file_mb: int | None = None) -> str:
     """Analisa o computador do usuário e devolve, em JSON: uso do disco (GB usados/total),
     lixo (arquivos temporários e lixeira), arquivos duplicados (espaço desperdiçado e exemplos)
-    e arquivos grandes (acima de large_file_mb MB, com os maiores caminhos).
+    e arquivos grandes (acima de large_file_mb MB, com os maiores caminhos), além do espaço de cada disco do PC
+    (em "discos": C:, E:...; "disco" é o do Windows).
     Use sempre que o usuário perguntar sobre espaço, saúde do disco, lixo, duplicados ou arquivos grandes.
     Sem large_file_mb, usa o tamanho escolhido nas Configurações do app.
     Esta ferramenta só lê o disco; nunca apaga nada."""

@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 from agent import FALLBACK_MODEL, MODEL, build_agent
 from tools import run_and_save_scan
 from tools.auto_clean import start_weekly_cleaner
+from tools.notifier import start_disk_watch
 from tools.disk_scan import MB, ROOT_NAMES
 from tools.file_tools import move_paths
 from langchain_openrouter import ChatOpenRouter
@@ -34,6 +35,7 @@ from tools.settings import load_settings, save_settings
 app = FastAPI(title="Linnea API")
 agent = build_agent()  # um agente só; a memória separa as conversas pelo thread_id
 start_weekly_cleaner()  # limpeza automática semanal (só roda se estiver ligada nas Configurações)
+start_disk_watch()  # aviso do Windows quando o disco C: passar de 90% (dá para desligar nas Configurações)
 
 
 @app.post("/api/scan")
@@ -113,6 +115,36 @@ def month_report():
     return {**data, "resumo": text}
 
 
+class LabelsRequest(BaseModel):
+    itens: list[dict]  # [{nome, caminho, tipo, tamanho_mb, modificado}]
+
+
+LABELS_PROMPT = (
+    "Você é a Linnea, agente de limpeza de um PC Windows. Para cada arquivo do JSON, escolha UMA etiqueta: "
+    "\"seguro apagar\", \"instalador antigo\", \"pode ser importante\", \"sem uso há 1 ano+\" ou null (sem etiqueta), "
+    "e um motivo curto (até 12 palavras) em português do Brasil. Pense pelo nome, tipo, tamanho, data e pasta. "
+    "Responda SÓ com JSON: [{\"caminho\": \"...\", \"etiqueta\": \"...\" ou null, \"motivo\": \"...\"}]"
+)
+VALID_LABELS = {"seguro apagar", "instalador antigo", "pode ser importante", "sem uso há 1 ano+", None}
+
+
+@app.post("/api/etiquetas-ia")
+def ai_labels(request: LabelsRequest):
+    """Tela Arquivos: a Linnea revisa as etiquetas de até 50 arquivos com IA (1 chamada ao modelo por clique)."""
+    files = [{k: item.get(k) for k in ("nome", "caminho", "tipo", "tamanho_mb", "modificado")} for item in request.itens[:50]]
+    try:
+        text = report_model.invoke([("system", LABELS_PROMPT), ("user", json.dumps(files, ensure_ascii=False))]).content
+        answer = json.loads(text[text.index("["): text.rindex("]") + 1])  # tira texto ou crases em volta do JSON
+    except Exception:  # noqa: BLE001 — IA lotada ou resposta fora do formato
+        raise HTTPException(status_code=503, detail="A IA não conseguiu revisar agora. Tente de novo.")
+    known = {f["caminho"] for f in files}
+    return [
+        {"caminho": a["caminho"], "etiqueta": a.get("etiqueta"), "motivo": str(a.get("motivo", ""))[:120]}
+        for a in answer
+        if isinstance(a, dict) and a.get("caminho") in known and a.get("etiqueta") in VALID_LABELS
+    ]
+
+
 @app.get("/api/historico")
 def history():
     """Tela Gráficos: um resumo do disco por dia (do mais antigo para o mais novo)."""
@@ -134,6 +166,7 @@ class SettingsRequest(BaseModel):
     limpeza_semanal: bool | None = None
     personalidade: Literal["padrao", "formal", "divertida", "direta"] | None = None
     cuidado: Literal["sempre_pedir", "lixo_sozinha"] | None = None
+    avisar_disco_cheio: bool | None = None
 
 
 @app.put("/api/config")
@@ -209,6 +242,19 @@ def summarize_tool_result(name: str, content: str) -> str:
             mb = str(data["espaco_desperdicado_mb"]).replace(".", ",")
             return f"{data['grupos_total']} grupos de duplicatas · {data['copias_extras_total']} cópias extras · {mb} MB desperdiçados"
         except (ValueError, KeyError):
+            pass
+    summaries = {  # resumos curtos das ferramentas de limpeza e do sistema
+        "programas_pesados": lambda d: "Mais pesados: " + ", ".join(f"{p['nome']} ({p['ram_mb']} MB)" for p in d[:3]),
+        "listar_inicializacao": lambda d: f"{sum(i['ativo'] for i in d)} de {len(d)} programas abrem com o Windows",
+        "listar_programas_instalados": lambda d: f"{d['total']} programas instalados · maior: {d['programas'][0]['nome'] if d['programas'] else '-'}",
+        "tamanho_cache_navegadores": lambda d: " · ".join(f"{b}: {mb} MB" for b, mb in d.items()) or "nenhum navegador com cache",
+        "listar_fotos_parecidas": lambda d: f"{d['fotos_analisadas']} fotos analisadas · {len(d['grupos'])} grupos de fotos parecidas",
+        "listar_pastas_vazias_e_atalhos": lambda d: f"{len(d['pastas_vazias'])} pastas vazias · {len(d['atalhos_quebrados'])} atalhos quebrados",
+    }
+    if name in summaries:
+        try:
+            return summaries[name](json.loads(content))
+        except (ValueError, KeyError, IndexError, TypeError):
             pass
     if name == "ver_configuracao_pc":
         try:

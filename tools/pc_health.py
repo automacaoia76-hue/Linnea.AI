@@ -18,7 +18,7 @@ from pathlib import Path
 
 from langchain.tools import tool
 
-from tools.disk_scan import GB, SYSTEM_DRIVE
+from tools.disk_scan import GB, SYSTEM_DRIVE, fixed_drives
 
 SCAN_FILE = Path(__file__).resolve().parent.parent / "data" / "scan.json"
 SENSORS_URL = "http://localhost:8085/data.json"  # servidor do LibreHardwareMonitor
@@ -255,5 +255,6 @@ def pc_health() -> dict:
         "gpu": gpu,
         "ram": ram,
         "armazenamento": {"unidade": str(SYSTEM_DRIVE).rstrip("\\"), "total_gb": round(usage.total / GB), "uso": disk},
+        "discos": fixed_drives(),  # todos os discos (a nota usa só o do Windows, que é o que trava o PC quando enche)
         "verificado_em": datetime.now().isoformat(timespec="seconds"),
     }

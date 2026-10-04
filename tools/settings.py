@@ -12,6 +12,8 @@ DEFAULTS = {
     "ultima_limpeza_auto": None,  # quando a limpeza semanal rodou pela última vez
     "personalidade": "padrao",  # padrao, formal, divertida ou direta
     "cuidado": "sempre_pedir",  # sempre_pedir ou lixo_sozinha (limpar o lixo sem pedir permissão)
+    "avisar_disco_cheio": True,  # notificação do Windows quando o disco C: passar de 90%
+    "ultimo_aviso_disco": None,  # dia do último aviso (no máximo 1 por dia)
 }
 
 
