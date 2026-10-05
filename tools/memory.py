@@ -1,101 +1,121 @@
-"""Memória de longo prazo da Linnea, em arquivos .md que dá para abrir no Obsidian:
+"""Memória de longo prazo da Linnea: um caderno .md que dá para abrir no Obsidian.
 
-    E:\\LANG CLEAN\\memoria\\Linnea\\
-    ├── Perfil.md            ← fatos sobre o usuário e o PC (vai junto em toda mensagem)
-    └── Conversas\\
-        └── 2026-10-04.md    ← uma linha por pergunta do dia (pergunta, começo da resposta, ferramentas)
+    E:\\LANG CLEAN\\memoria\\Linnea\\Memória.md
 
-Os arquivos são do usuário: ele pode ler, corrigir ou apagar à vontade no Obsidian."""
+Guarda só o que é importante de cada conversa para ela ser a assistente pessoal do usuário e especialista no PC
+dele, separado por seções (você, uso, peças, problemas, upgrades, conhecimento e histórico).
+Vai junto em toda mensagem, então o conhecimento cresce com o tempo.
+O arquivo é do usuário: ele pode ler, corrigir ou apagar linhas à vontade no Obsidian."""
 
 import re
 from datetime import datetime
-from pathlib import Path
+from typing import Literal
 
 from langchain.tools import tool
 
+from paths import MEMORY_DIR
 from tools.file_tools import _send_ui
 
-MEMORY_DIR = Path(__file__).resolve().parents[2] / "memoria" / "Linnea"
-PROFILE = MEMORY_DIR / "Perfil.md"
-CONVERSATIONS = MEMORY_DIR / "Conversas"
-PROFILE_HEADER = "# Perfil\n\nO que a Linnea lembra sobre você e o seu PC. Pode editar ou apagar linhas à vontade.\n\n"
-MAX_FACTS_IN_PROMPT = 30  # o perfil vai em toda mensagem: fica curto para gastar pouco
+NOTEBOOK = MEMORY_DIR / "Memória.md"
+# Seção (como a Linnea escolhe) -> título no caderno
+SECTIONS = {
+    "voce": "Sobre você",
+    "uso": "Como uso o PC",
+    "pecas": "Peças (o que o Windows não mostra)",
+    "problemas": "Problemas e soluções",
+    "upgrades": "Upgrades",
+    "conhecimento": "Conhecimento de PC",
+    "historico": "Histórico do PC",
+}
+HEADER = "# Memória da Linnea\n\nO que ela aprendeu nas conversas sobre você e o seu PC. Ela anota sozinha; pode editar ou apagar linhas à vontade.\n"
+MAX_NOTES_IN_PROMPT = 15  # por seção: o caderno vai em toda mensagem, então fica curto para gastar pouco
 
 
-def profile_facts() -> list[str]:
-    """Fatos do perfil (as linhas que começam com "- ")."""
+def _lines() -> list[str]:
     try:
-        text = PROFILE.read_text(encoding="utf-8")
+        return NOTEBOOK.read_text(encoding="utf-8").splitlines()
     except OSError:
-        return []
-    return [line[2:].strip() for line in text.splitlines() if line.startswith("- ")]
+        return (HEADER + "".join(f"\n## {title}\n" for title in SECTIONS.values())).splitlines()
+
+
+def notebook() -> dict[str, list[str]]:
+    """Anotações do caderno por seção: {"Como uso": ["...", ...], ...} (só as linhas que começam com "- ")."""
+    notes, section = {}, None
+    for line in _lines():
+        if line.startswith("## "):
+            section = line[3:].strip()
+            notes.setdefault(section, [])
+        elif line.startswith("- ") and section:
+            notes[section].append(line[2:].strip())
+    return notes
 
 
 def profile_for_prompt() -> str:
-    """Trecho que entra nas instruções da Linnea (vazio se ela ainda não sabe nada)."""
-    facts = profile_facts()[-MAX_FACTS_IN_PROMPT:]
-    if not facts:
+    """Trecho que entra nas instruções da Linnea (vazio se o caderno ainda está vazio)."""
+    parts = [
+        f"  {section}:\n" + "\n".join(f"    • {note}" for note in notes[-MAX_NOTES_IN_PROMPT:])
+        for section, notes in notebook().items()
+        if notes
+    ]
+    if not parts:
         return ""
-    return "Memória (o que você já sabe sobre o usuário; use quando ajudar, sem repetir tudo):\n" + "\n".join(f"  • {f}" for f in facts) + "\n"
+    return "Memória (o que você já aprendeu sobre o usuário e o PC dele; use quando ajudar, sem repetir tudo):\n" + "\n".join(parts) + "\n"
 
 
 @tool
-def lembrar(fato: str) -> str:
-    """Anota um fato DURADOURO e útil sobre o usuário ou o PC na memória de longo prazo (arquivo Perfil.md).
-    Use quando o usuário contar algo que vale para as próximas conversas: para que usa o PC, preferências,
-    pastas ou arquivos importantes (ex.: "usa o FL Studio; não apagar projetos .flp").
-    Uma frase curta por fato. Não anote coisas passageiras nem dados sensíveis (senhas, documentos, números pessoais)."""
-    fact = " ".join(fato.split())[:200]
-    if not fact:
+def lembrar(
+    secao: Literal["voce", "uso", "pecas", "problemas", "upgrades", "conhecimento", "historico"], nota: str
+) -> str:
+    """Anota na memória de longo prazo algo IMPORTANTE da conversa, que vai ajudar nas próximas. Seções:
+    voce = quem é o usuário e como ele gosta de ser ajudado (nome, preferências, objetivos);
+    uso = para que ele usa o PC, programas e pastas importantes (ex.: "usa o FL Studio; não apagar projetos .flp");
+    pecas = peças que o Windows não mostra (fonte, gabinete, cooler, monitor...);
+    problemas = problema encontrado e a solução; upgrades = planos e o que já foi feito;
+    conhecimento = algo sobre computadores que você confirmou (com pesquisar_web: cite o site) e vale guardar;
+    historico = mudanças no PC (peça instalada, formatação...).
+    Uma frase curta por nota. Nada de conversa fiada, coisas passageiras ou dados sensíveis (senhas, documentos)."""
+    note = " ".join(nota.split())[:220]
+    title = SECTIONS.get(secao)
+    if not note or not title:
         return "Nada para anotar."
-    without_date = lambda text: re.sub(r"\s*\(anotado em [^)]*\)$", "", text).lower()  # compara sem a data do fim
-    if without_date(fact) in (without_date(f) for f in profile_facts()):
-        return "Esse fato já estava na memória."
+    without_date = lambda text: re.sub(r"\s*\(\d{2}/\d{2}/\d{4}\)$", "", text).lower()  # compara sem a data do fim
+    if without_date(note) in (without_date(n) for n in notebook().get(title, [])):
+        return "Isso já estava na memória."
+
+    lines = _lines()
+    heading = f"## {title}"
+    if heading not in lines:
+        lines += ["", heading]
+    start = lines.index(heading)
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    while end > start + 1 and not lines[end - 1].strip():  # entra logo depois da última anotação da seção
+        end -= 1
+    lines.insert(end, f"- {note} ({datetime.now():%d/%m/%Y})")
     MEMORY_DIR.mkdir(parents=True, exist_ok=True)
-    if not PROFILE.exists():
-        PROFILE.write_text(PROFILE_HEADER, encoding="utf-8")
-    with PROFILE.open("a", encoding="utf-8") as file:
-        file.write(f"- {fact} (anotado em {datetime.now():%d/%m/%Y})\n")
-    _send_ui({"acao": "memoria", "descricao": f"anotei na memória: {fact}"})
-    return "Anotado na memória."
+    NOTEBOOK.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    _send_ui({"acao": "memoria", "descricao": f"anotei na memória ({title}): {note}"})
+    return f"Anotado na memória, em {title}."
 
 
 @tool
 def buscar_memoria(assunto: str) -> str:
-    """Procura nas conversas antigas e no perfil o que já foi falado sobre um assunto
-    (ex.: "o que limpamos semana passada", "duplicatas", "FL Studio"). Use quando o usuário perguntar sobre
-    conversas anteriores ou algo que você deveria lembrar. Devolve as linhas encontradas, com a data."""
-    words = [w for w in re.findall(r"\w+", assunto.lower()) if len(w) >= 4]
+    """Procura na memória o que você já anotou sobre um assunto (ex.: "fonte", "RAM", "BIOS", "FL Studio").
+    Use quando o usuário perguntar algo que você já deveria saber sobre ele ou o PC. Devolve as anotações com a seção."""
+    words = [w for w in re.findall(r"\w+", assunto.lower()) if len(w) >= 3]
     if not words:
         return "Diga o assunto com uma palavra mais específica."
-    found = [f"(perfil) {fact}" for fact in profile_facts() if any(w in fact.lower() for w in words)]
-    for day_file in sorted(CONVERSATIONS.glob("*.md"), reverse=True):  # das conversas mais novas para as mais velhas
-        for line in day_file.read_text(encoding="utf-8").splitlines():
-            if line.startswith("- ") and any(w in line.lower() for w in words):
-                found.append(f"({day_file.stem}) {line[2:]}")
-    if not found:
-        return "Não achei nada sobre isso na memória."
-    return "\n".join(found[:15])
-
-
-def log_turn(question: str, reply: str, tools_used: list[str]) -> None:
-    """Grava uma linha da conversa no arquivo do dia (sem IA: a pergunta, o começo da resposta e as ferramentas)."""
-    if not question and not reply:
-        return
-    CONVERSATIONS.mkdir(parents=True, exist_ok=True)
-    day_file = CONVERSATIONS / f"{datetime.now():%Y-%m-%d}.md"
-    if not day_file.exists():
-        day_file.write_text(f"# Conversas de {datetime.now():%d/%m/%Y}\n\n", encoding="utf-8")
-    short = lambda text, size: (" ".join(text.split())[:size] + "…") if len(" ".join(text.split())) > size else " ".join(text.split())
-    tools = f" [usou: {', '.join(dict.fromkeys(tools_used))}]" if tools_used else ""
-    with day_file.open("a", encoding="utf-8") as file:
-        file.write(f"- {datetime.now():%H:%M} · Você: {short(question, 160)} → Linnea: {short(reply, 220)}{tools}\n")
+    found = [
+        f"({section}) {note}"
+        for section, notes in notebook().items()
+        for note in notes
+        if any(w in note.lower() for w in words)
+    ]
+    return "\n".join(found[:15]) or "Não achei nada sobre isso na memória."
 
 
 def memory_summary() -> dict:
-    """Para a tela de Configurações: onde está a memória, os fatos e quantos dias de conversa."""
+    """Para a tela de Configurações: onde está a memória e as anotações (com a seção)."""
     return {
         "pasta": str(MEMORY_DIR),
-        "fatos": profile_facts(),
-        "dias_de_conversa": len(list(CONVERSATIONS.glob("*.md"))) if CONVERSATIONS.exists() else 0,
+        "fatos": [f"{section}: {note}" for section, notes in notebook().items() for note in notes],
     }

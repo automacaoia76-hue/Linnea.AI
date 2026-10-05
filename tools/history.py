@@ -2,11 +2,11 @@
 Se rodar mais de um scan no mesmo dia, fica o mais recente."""
 
 import json
-from pathlib import Path
 
+from paths import DATA_DIR
 from tools.disk_stats import folder_sizes
 
-HISTORY_FILE = Path(__file__).resolve().parent.parent / "data" / "historico.json"
+HISTORY_FILE = DATA_DIR / "historico.json"
 MAX_DAYS = 365  # guarda até 1 ano
 
 

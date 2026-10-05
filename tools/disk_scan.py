@@ -20,6 +20,7 @@ from pathlib import Path
 
 from langchain.tools import tool
 
+from paths import CLOUD
 from tools.settings import load_settings
 
 GB = 1024**3
@@ -254,5 +255,9 @@ def scan_disk(large_file_mb: int | None = None) -> str:
     Use sempre que o usuário perguntar sobre espaço, saúde do disco, lixo, duplicados ou arquivos grandes.
     Sem large_file_mb, usa o tamanho escolhido nas Configurações do app.
     Esta ferramenta só lê o disco; nunca apaga nada."""
+    if CLOUD:  # na nuvem: o último scan que o PC enviou (o PC pode estar desligado)
+        from tools.disk_stats import SCAN_FILE  # aqui dentro: disk_stats importa este arquivo
+
+        return SCAN_FILE.read_text(encoding="utf-8") if SCAN_FILE.exists() else "O PC ainda não enviou nenhum scan."
     minimum = large_file_mb or load_settings()["arquivo_grande_mb"]
     return json.dumps(scan(large_file_mb=minimum), ensure_ascii=False)

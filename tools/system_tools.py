@@ -5,8 +5,12 @@ import ctypes
 import json
 import os
 import subprocess
-import winreg
 from pathlib import Path
+
+try:
+    import winreg
+except ImportError:  # Linux (Linnea na nuvem): nada daqui roda lá
+    winreg = None
 
 from langchain.tools import tool
 

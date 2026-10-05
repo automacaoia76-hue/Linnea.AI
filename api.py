@@ -8,39 +8,56 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 from openrouter.errors import TooManyRequestsResponseError
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
+import cloud_auth
+from paths import CLOUD, DIST
 from agent import FALLBACK_MODEL, MODEL, build_agent
 from tools import run_and_save_scan
 from tools.auto_clean import start_weekly_cleaner
 from tools.notifier import start_disk_watch
+from tools.cloud_sync import start_cloud_sync, start_snapshot_refresh
 from tools.disk_scan import MB, ROOT_NAMES
 from tools.file_tools import move_paths
 from langchain_openrouter import ChatOpenRouter
 
 from tools.cleanups import load_cleanups
-from tools.disk_stats import composition
+from tools.disk_stats import SCAN_FILE, composition
 from tools.file_lists import file_list, preview_path
-from tools.memory import log_turn, memory_summary
+from tools.memory import memory_summary
 from tools.pc_health import pc_health
+from tools.retrato import retrato
 from tools.report import month_summary
 from tools.folder_map import folder_map
 from tools.history import load_history
 from tools.settings import load_settings, save_settings
+from voice import voice_session
 
 app = FastAPI(title="Linnea API")
+if CLOUD:  # Linnea na nuvem: login obrigatório e os dados vêm do último retrato do PC
+    app.middleware("http")(cloud_auth.require_login)
+    start_snapshot_refresh()  # baixa o retrato agora e a cada minuto (antes de montar o agente: ele lê a memória)
+else:
+    start_weekly_cleaner()  # limpeza automática semanal (só roda se estiver ligada nas Configurações)
+    start_disk_watch()  # aviso do Windows quando o disco C: passar de 90% (dá para desligar nas Configurações)
+    start_cloud_sync()  # retrato do PC para a Linnea na nuvem (a cada 10 min; só se o Supabase estiver no .env)
 agent = build_agent()  # um agente só; a memória separa as conversas pelo thread_id
-start_weekly_cleaner()  # limpeza automática semanal (só roda se estiver ligada nas Configurações)
-start_disk_watch()  # aviso do Windows quando o disco C: passar de 90% (dá para desligar nas Configurações)
 
 
 @app.post("/api/scan")
 def run_scan():
-    """Botão "Start scan": roda o scan, salva o resultado em JSON (data/scan.json) e devolve para o front."""
+    """Botão "Start scan": roda o scan, salva o resultado em JSON (data/scan.json) e devolve para o front.
+    Na nuvem não dá para escanear o PC: devolve o último scan que ele enviou."""
+    if CLOUD:
+        if not SCAN_FILE.exists():
+            raise HTTPException(status_code=404, detail="O PC ainda não enviou nenhum retrato. Abra a Linnea no PC.")
+        return json.loads(SCAN_FILE.read_text(encoding="utf-8"))
     return run_and_save_scan()  # a mesma função que a Linnea usa na ferramenta rodar_scan
 
 
@@ -167,6 +184,7 @@ class SettingsRequest(BaseModel):
     personalidade: Literal["padrao", "formal", "divertida", "direta"] | None = None
     cuidado: Literal["sempre_pedir", "lixo_sozinha"] | None = None
     avisar_disco_cheio: bool | None = None
+    voz: Literal["Kore", "Aoede", "Leda", "Zephyr", "Sulafat", "Despina", "Puck", "Charon"] | None = None
 
 
 @app.put("/api/config")
@@ -250,6 +268,9 @@ def summarize_tool_result(name: str, content: str) -> str:
         "tamanho_cache_navegadores": lambda d: " · ".join(f"{b}: {mb} MB" for b, mb in d.items()) or "nenhum navegador com cache",
         "listar_fotos_parecidas": lambda d: f"{d['fotos_analisadas']} fotos analisadas · {len(d['grupos'])} grupos de fotos parecidas",
         "listar_pastas_vazias_e_atalhos": lambda d: f"{len(d['pastas_vazias'])} pastas vazias · {len(d['atalhos_quebrados'])} atalhos quebrados",
+        # Pesquisa: quantos resultados e de quais sites (ex.: "3 resultados · techpowerup.com, amd.com")
+        "pesquisar_web": lambda d: f"{len(d)} resultados · "
+        + ", ".join(dict.fromkeys(item["site"].split("/")[2].removeprefix("www.") for item in d)),
     }
     if name in summaries:
         try:
@@ -314,7 +335,38 @@ def react_steps(new_messages) -> list[Step]:
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "model": MODEL, "fallback_model": FALLBACK_MODEL}
+    # nuvem: o app mostra a tela de login e de quando é o retrato do PC
+    info = {"status": "ok", "model": MODEL, "fallback_model": FALLBACK_MODEL, "nuvem": CLOUD}
+    if CLOUD:
+        info["retrato_de"] = retrato().get("feito_em")
+    return info
+
+
+class LoginRequest(BaseModel):
+    email: str
+    senha: str
+
+
+@app.post("/api/login")
+def do_login(request: LoginRequest):
+    """Só na nuvem: e-mail e senha da sua conta no Supabase -> token para as outras chamadas."""
+    tokens = cloud_auth.login(request.email, request.senha) if CLOUD else None
+    if not tokens:
+        raise HTTPException(status_code=401, detail="E-mail ou senha errados.")
+    return tokens
+
+
+class RefreshRequest(BaseModel):
+    renovar: str
+
+
+@app.post("/api/login/renovar")
+def renew_login(request: RefreshRequest):
+    """O token vence em ~1 hora: o app pede um novo sozinho, sem você digitar a senha de novo."""
+    tokens = cloud_auth.refresh(request.renovar) if CLOUD else None
+    if not tokens:
+        raise HTTPException(status_code=401, detail="Faça login de novo.")
+    return tokens
 
 
 # "def" (e não "async def"): o FastAPI roda numa thread separada, então o agente pode demorar sem travar a API
@@ -353,7 +405,7 @@ def auto_approved(requests) -> bool:
     return load_settings()["cuidado"] == "lixo_sozinha" and all(r["name"] == "limpar_lixo" for r in requests)
 
 
-def agent_events(agent_input, config, question=""):
+def agent_events(agent_input, config):
     """Roda o agente (mensagem nova ou retomada depois da permissão) e gera os eventos SSE:
     - step:     um passo do ReAct (pensando, ação, resultado)
     - token:    um pedaço do texto da resposta
@@ -361,10 +413,8 @@ def agent_events(agent_input, config, question=""):
     - ui:       ação da Linnea na tela (destacar card, scan novo...)
     - approval: a Linnea quer mexer em arquivos e está esperando o usuário aprovar ou recusar
     - done:     fim (modelo que respondeu e ferramentas usadas)
-    - error:    algo deu errado (mensagem amigável)
-    No fim, grava uma linha da conversa na memória (question = a pergunta do usuário)."""
+    - error:    algo deu errado (mensagem amigável)"""
     tool_names, tools_used, model_used = {}, [], MODEL
-    reply = ""  # o texto da resposta, para a memória
     try:
         # Repete quando a permissão é dada automaticamente (nível de cuidado "pode limpar o lixo sozinha")
         while agent_input is not None:
@@ -373,7 +423,6 @@ def agent_events(agent_input, config, question=""):
             for mode, data in stream:
                 if mode == "custom":
                     if "token" in data:
-                        reply += data["token"]
                         yield sse("token", {"text": data["token"]})
                     elif "switch" in data:
                         yield sse("switch", {"model": data["switch"]})
@@ -397,10 +446,6 @@ def agent_events(agent_input, config, question=""):
                         for step in message_steps(message, tool_names):
                             if step.kind != "resposta":  # a resposta o usuário já vê chegando no chat
                                 yield sse("step", step.model_dump())
-        try:
-            log_turn(question or "(continuação depois da permissão)", reply, tools_used)
-        except OSError:
-            pass  # sem conseguir gravar a memória, a conversa continua normal
         yield sse("done", {"model": model_used, "tools_used": tools_used})
     except TooManyRequestsResponseError:
         yield sse("error", {"detail": "A IA está ocupada agora. Tente de novo em alguns segundos."})
@@ -415,7 +460,7 @@ def chat_stream(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Mensagem vazia.")
     config = {"configurable": {"thread_id": request.thread_id}}
     agent_input = {"messages": [{"role": "user", "content": request.message}]}
-    return StreamingResponse(agent_events(agent_input, config, request.message), media_type="text/event-stream")
+    return StreamingResponse(agent_events(agent_input, config), media_type="text/event-stream")
 
 
 class ResumeRequest(BaseModel):
@@ -434,3 +479,18 @@ def chat_resume(request: ResumeRequest):
     decision = {"type": "approve"} if request.approve else {"type": "reject", "message": "O usuário recusou esta ação."}
     agent_input = Command(resume={"decisions": [decision] * count})
     return StreamingResponse(agent_events(agent_input, config), media_type="text/event-stream")
+
+
+@app.websocket("/api/voz")
+async def voz(ws: WebSocket):
+    """Modo conversa por voz com a Linnea (Gemini Live). Ver voice.py."""
+    if CLOUD and not await run_in_threadpool(cloud_auth.valid, ws.query_params.get("token", "")):
+        await ws.close(code=4401)  # sem login, sem conversa
+        return
+    await voice_session(ws, auto_approved)
+
+
+# App instalado: o próprio FastAPI entrega a tela já compilada (npm run build em frontend/), sem precisar do Vite.
+# Fica por último: as rotas /api acima têm prioridade, e todo o resto é arquivo da tela.
+if DIST.exists():
+    app.mount("/", StaticFiles(directory=DIST, html=True), name="tela")

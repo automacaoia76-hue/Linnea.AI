@@ -11,3 +11,7 @@ wheels/
 
 # Dados gerados pelo app (scan, histórico, configurações, limpezas): pessoais, não vão para o git
 data/
+
+# Gerados ao criar o Linnea.AI.exe (build_exe.py)
+projeto.txt
+*.spec

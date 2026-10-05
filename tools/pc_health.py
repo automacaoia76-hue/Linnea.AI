@@ -12,15 +12,20 @@ import shutil
 import subprocess
 import time
 import urllib.request
-import winreg
 from datetime import datetime
-from pathlib import Path
+
+try:
+    import winreg
+except ImportError:  # Linux (Linnea na nuvem): nada daqui roda lá
+    winreg = None
 
 from langchain.tools import tool
 
+from paths import CLOUD, DATA_DIR
 from tools.disk_scan import GB, SYSTEM_DRIVE, fixed_drives
+from tools.retrato import retrato
 
-SCAN_FILE = Path(__file__).resolve().parent.parent / "data" / "scan.json"
+SCAN_FILE = DATA_DIR / "scan.json"
 SENSORS_URL = "http://localhost:8085/data.json"  # servidor do LibreHardwareMonitor
 
 
@@ -167,6 +172,8 @@ _hardware_cache = None
 def hardware_info() -> dict:
     """Processador, placa-mãe, memória (cada pente), placa de vídeo, discos e Windows."""
     global _hardware_cache
+    if CLOUD:  # na nuvem: as peças do último retrato
+        return retrato().get("pecas", {})
     if _hardware_cache is not None:
         return _hardware_cache
     raw = subprocess.run(
@@ -232,10 +239,15 @@ def ver_configuracao_pc() -> str:
         hardware = hardware_info()
     except (OSError, ValueError, KeyError, subprocess.SubprocessError):
         hardware = {"erro": "Não consegui ler as peças do PC agora."}
-    return json.dumps({"pecas": hardware, "agora": pc_health()}, ensure_ascii=False)
+    result = {"pecas": hardware, "agora": pc_health()}
+    if CLOUD:  # na nuvem: avisa de quando são os dados (o PC pode estar desligado)
+        result["retrato_de"] = retrato().get("feito_em")
+    return json.dumps(result, ensure_ascii=False)
 
 
 def pc_health() -> dict:
+    if CLOUD:  # na nuvem: a saúde do último retrato
+        return retrato().get("saude", {})
     cpu = _cpu_percent()
     cpu_temp = _cpu_temperature()
     ram = _ram()

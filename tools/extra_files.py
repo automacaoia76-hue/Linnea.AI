@@ -12,13 +12,14 @@ from pathlib import Path
 
 from langchain.tools import tool
 
+from paths import DATA_DIR
 from tools.cleanups import log_cleanup
 from tools.disk_scan import MB, USER_FOLDERS, _walk_files, allowed_folders
 from tools.file_tools import _is_personal_file, _is_protected, _send_ui, _user_path, move_paths
 from tools.folder_map import _root_of
 from tools.system_tools import run_powershell
 
-RENAME_LOG = Path(__file__).resolve().parent.parent / "data" / "ultima_renomeacao.json"
+RENAME_LOG = DATA_DIR / "ultima_renomeacao.json"
 PHOTO_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
 MAX_PHOTOS = 400  # ler cada foto leva um tempinho: olha as 400 mais recentes
 

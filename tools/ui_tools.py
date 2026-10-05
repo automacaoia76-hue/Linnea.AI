@@ -12,15 +12,16 @@ from typing import Literal
 
 from langchain.tools import tool
 from pydantic import BaseModel, Field
-from langgraph.config import get_stream_writer
 
+from paths import DATA_DIR
+from tools.cloud_sync import send_soon
 from tools.disk_scan import scan
-from tools.file_tools import _user_path
+from tools.file_tools import _send_ui, _user_path
 from tools.folder_map import _root_of
 from tools.history import save_history
 from tools.settings import load_settings, save_settings
 
-SCAN_FILE = Path(__file__).resolve().parent.parent / "data" / "scan.json"  # último scan salvo
+SCAN_FILE = DATA_DIR / "scan.json"  # último scan salvo
 
 CARD_NAMES = {"disco": "Disco", "lixo": "Lixo", "duplicatas": "Duplicatas", "grandes": "Arquivos grandes"}
 
@@ -32,15 +33,8 @@ def run_and_save_scan():
     SCAN_FILE.parent.mkdir(exist_ok=True)
     SCAN_FILE.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     save_history(result)  # 1 registro por dia, para o gráfico da tela Gráficos
+    send_soon()  # atualiza o retrato do PC na nuvem
     return result
-
-
-def _send_ui(action: dict):
-    """Manda uma ação para a tela. Fora do streaming (ex.: chat no terminal), simplesmente não faz nada."""
-    try:
-        get_stream_writer()({"ui": action})
-    except (RuntimeError, KeyError):  # fora do streaming do agente não há tela para avisar
-        pass
 
 
 @tool

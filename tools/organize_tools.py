@@ -10,12 +10,13 @@ import json
 from pathlib import Path
 
 from langchain.tools import tool
-from langgraph.config import get_stream_writer
 
+from paths import DATA_DIR
+from tools.file_tools import _send_ui
 from tools.settings import load_settings
 
 DOWNLOADS = Path.home() / "Downloads"
-ORGANIZE_LOG = Path(__file__).resolve().parent.parent / "data" / "ultima_organizacao.json"  # para o "desfazer"
+ORGANIZE_LOG = DATA_DIR / "ultima_organizacao.json"  # para o "desfazer"
 
 CATEGORIES = {
     "PDFs": {".pdf"},
@@ -27,13 +28,6 @@ CATEGORIES = {
     "Instaladores": {".exe", ".msi", ".bin", ".iso"},
 }
 SKIP_SUFFIXES = {".crdownload", ".part", ".tmp", ".partial"}  # downloads ainda em andamento: não mexe
-
-
-def _send_ui(action: dict):
-    try:
-        get_stream_writer()({"ui": action})
-    except (RuntimeError, KeyError):  # fora do streaming do agente não há tela para avisar
-        pass
 
 
 def _category(path: Path):

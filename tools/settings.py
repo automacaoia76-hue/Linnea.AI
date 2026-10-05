@@ -1,9 +1,10 @@
 """Configurações do app que o backend usa (tela ⚙️), guardadas em data/config.json."""
 
 import json
-from pathlib import Path
 
-CONFIG_FILE = Path(__file__).resolve().parent.parent / "data" / "config.json"
+from paths import DATA_DIR
+
+CONFIG_FILE = DATA_DIR / "config.json"
 DEFAULTS = {
     "arquivo_grande_mb": 100,  # a partir de quantos MB um arquivo conta como "grande"
     "pastas_proibidas": [],  # pastas pessoais que a Linnea NÃO analisa nem mexe (ex.: ["Documentos"])
@@ -14,6 +15,7 @@ DEFAULTS = {
     "cuidado": "sempre_pedir",  # sempre_pedir ou lixo_sozinha (limpar o lixo sem pedir permissão)
     "avisar_disco_cheio": True,  # notificação do Windows quando o disco C: passar de 90%
     "ultimo_aviso_disco": None,  # dia do último aviso (no máximo 1 por dia)
+    "voz": "Kore",  # voz da Linnea no modo conversa (vozes do Gemini Live)
 }
 
 

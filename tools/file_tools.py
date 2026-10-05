@@ -11,6 +11,7 @@ import json
 import os
 import re
 import time
+from contextvars import ContextVar
 from ctypes import wintypes
 from pathlib import Path
 
@@ -104,7 +105,15 @@ def _folder_size(path: Path) -> tuple[int, int]:
     return total, count
 
 
+# No modo voz (voice.py) não há streaming do LangChain: as ações para a tela vão por esta função
+voice_ui: ContextVar = ContextVar("voice_ui", default=None)
+
+
 def _send_ui(action: dict):
+    """Manda uma ação para a tela (chat escrito ou modo voz). Fora dos dois (ex.: chat no terminal), não faz nada."""
+    if voice_ui.get():
+        voice_ui.get()(action)
+        return
     try:
         get_stream_writer()({"ui": action})
     except (RuntimeError, KeyError):  # fora do streaming do agente não há tela para avisar

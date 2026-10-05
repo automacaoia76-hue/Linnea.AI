@@ -3,9 +3,10 @@ Cada vez que algo vai para a Lixeira ou o lixo é limpo, guarda uma linha em dat
 
 import json
 from datetime import datetime
-from pathlib import Path
 
-CLEANUPS_FILE = Path(__file__).resolve().parent.parent / "data" / "limpezas.json"
+from paths import DATA_DIR
+
+CLEANUPS_FILE = DATA_DIR / "limpezas.json"
 
 
 def load_cleanups() -> list[dict]:

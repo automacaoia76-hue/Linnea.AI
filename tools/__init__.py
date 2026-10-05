@@ -1,3 +1,4 @@
+from paths import CLOUD
 from tools.disk_scan import scan_disk
 from tools.extra_files import compactar_em_zip, desfazer_renomeacao, listar_fotos_parecidas, listar_pastas_vazias_e_atalhos, renomear_arquivos
 from tools.file_tools import apagar_duplicatas, limpar_lixo, listar_duplicatas, mover_para_lixeira
@@ -16,6 +17,7 @@ from tools.system_tools import (
     reativar_inicializacao,
     tamanho_cache_navegadores,
 )
+from tools.web_search import pesquisar_web
 from tools.ui_tools import abrir_tela, destacar_card, iniciar_tour, marcar_arquivos, mostrar_plano, mudar_configuracao, rodar_scan, run_and_save_scan
 
 # Todas as ferramentas que a Linnea pode usar
@@ -54,7 +56,14 @@ ALL_TOOLS = [
     desinstalar_programa,
     tamanho_cache_navegadores,
     limpar_cache_navegador,
+    # Conhecimento de fora: pesquisa em sites confiáveis
+    pesquisar_web,
 ]
+
+# Na nuvem (sem acesso ao PC): só as que leem o retrato, pesquisam ou mexem na tela
+CLOUD_TOOLS = [scan_disk, ver_configuracao_pc, buscar_memoria, pesquisar_web, destacar_card, abrir_tela, iniciar_tour]
+if CLOUD:
+    ALL_TOOLS = CLOUD_TOOLS
 
 # Ferramentas que mexem em arquivos ou no sistema: o agente só executa depois que o usuário aprovar na tela
 NEEDS_APPROVAL = [

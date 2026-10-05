@@ -5,12 +5,13 @@ import json
 import os
 import shutil
 import time
-from pathlib import Path
 
+from paths import CLOUD, DATA_DIR
 from tools.disk_scan import GB, MB, SYSTEM_DRIVE, allowed_roots
+from tools.retrato import retrato
 from tools.labels import KINDS
 
-SCAN_FILE = Path(__file__).resolve().parent.parent / "data" / "scan.json"
+SCAN_FILE = DATA_DIR / "scan.json"
 CATEGORY_NAMES = {
     "video": "Vídeos",
     "imagem": "Imagens",
@@ -41,6 +42,8 @@ def _walk_sizes(deadline):
 
 def composition(time_limit_s: float = 30) -> dict:
     """Do que o disco é feito: tipos de arquivo das pastas pessoais, lixo e o resto (sistema e programas)."""
+    if CLOUD:  # na nuvem: a do último retrato
+        return retrato().get("composicao", {"usado_gb": 0, "total_gb": 0, "partes": [], "parcial": False})
     deadline = time.monotonic() + time_limit_s
     by_kind = {name: 0 for name in CATEGORY_NAMES.values()}
     others = 0
