@@ -158,7 +158,7 @@ UNINSTALL_KEYS = [
     (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
     (winreg.HKEY_LOCAL_MACHINE, r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
     (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
-]
+] if winreg else []  # Linux (nuvem): sem registro do Windows
 
 
 def _split_command(command: str) -> tuple[str, str]:
