@@ -1,0 +1,65 @@
+/* Aviso no canto superior direito, por cima do robô */
+.linnea-toast {
+  position: fixed;
+  top: 66px;
+  right: 24px;
+  z-index: 35;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 330px;
+  padding: 12px 12px 12px 14px;
+  background: var(--glass-strong);
+  font-size: 13px;
+  animation: toast-in 0.4s cubic-bezier(0.22, 0.9, 0.24, 1);
+}
+
+.toast-avatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+.toast-body strong {
+  font-size: 12px;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  background: var(--hover);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linnea-toast {
+    animation: none;
+  }
+}

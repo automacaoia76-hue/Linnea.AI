@@ -3,6 +3,7 @@ services:
   - type: web
     name: linnea-ai
     runtime: python
+    rootDir: backend # o código Python fica na pasta backend/
     plan: free
     region: virginia # perto do Supabase (us-east-1)
     buildCommand: pip install -r requirements.txt

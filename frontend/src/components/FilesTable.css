@@ -1,0 +1,130 @@
+/* Tabela dos maiores arquivos */
+.files {
+  flex: 1; /* ocupa o espaço que sobra na coluna */
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none; /* rola com a roda do mouse, mas sem mostrar a barra */
+  padding: 8px 10px 6px;
+  font-size: 12px;
+}
+
+.files table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 2px;
+  table-layout: fixed;
+}
+
+.files th {
+  box-sizing: border-box; /* a largura das colunas já inclui o espaçamento interno */
+  padding: 2px 8px 4px;
+  font-size: 11px;
+  font-weight: 400;
+  text-align: left;
+  color: var(--text-muted);
+}
+
+.files th:nth-child(1) {
+  width: 36%;
+}
+
+.files th:nth-child(2) {
+  width: 16%;
+}
+
+.files th:nth-child(3) {
+  width: 28%;
+}
+
+.files td {
+  padding: 5px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.files td:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+/* Ícone + nome lado a lado (o flex fica num div dentro da célula, para não quebrar a tabela) */
+.file-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.files td:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+.files .num {
+  text-align: right;
+}
+
+.files tbody tr {
+  transition: background 0.2s;
+}
+
+.files tbody tr:hover td {
+  background: var(--hover);
+}
+
+/* Maior arquivo destacado, como na referência */
+.files tbody tr.top td {
+  background: color-mix(in srgb, var(--purple) 12%, transparent);
+  color: var(--purple);
+}
+
+.files tbody tr.top .file-type {
+  color: var(--purple);
+}
+
+.file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-type {
+  color: var(--text-muted);
+}
+
+.file-icon {
+  display: grid;
+  flex-shrink: 0;
+}
+
+.file-icon.blue {
+  color: var(--blue);
+}
+.file-icon.pink {
+  color: var(--pink);
+}
+.file-icon.green {
+  color: var(--green);
+}
+.file-icon.purple {
+  color: var(--purple);
+}
+.file-icon.gray {
+  color: var(--text-muted);
+}
+
+.files footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px 2px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.files-total {
+  color: var(--purple);
+}
+
+/* Esconde a barra de rolagem também no Chrome/Edge (a rolagem continua funcionando) */
+.files::-webkit-scrollbar {
+  display: none;
+}

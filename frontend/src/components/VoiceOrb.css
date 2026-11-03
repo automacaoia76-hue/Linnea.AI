@@ -1,0 +1,168 @@
+/* ---- Modo voz: a logo ocupa a tela e o chat vai para o canto direito ---- */
+
+.voice-orb {
+  --nivel: 0; /* volume da fala (0 a 1), atualizado pelo VoiceOrb.jsx */
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: calc(var(--chat-w) + 32px); /* o espaço que sobra à esquerda do chat */
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: radial-gradient(circle at 50% 45%, rgba(110, 80, 255, 0.16), transparent 60%);
+}
+
+.orb {
+  position: relative;
+  width: min(46vh, 34vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  animation: orb-breathe 4.5s ease-in-out infinite; /* "respira" devagar enquanto ouve */
+}
+
+/* Halo girando atrás da logo; acende com a voz */
+.orb-halo {
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #4f9dff, #8f6bff, #e46bd8, #4f9dff);
+  mask: radial-gradient(circle, transparent 62%, #000 63%, #000 64.5%, transparent 66%);
+  -webkit-mask: radial-gradient(circle, transparent 62%, #000 63%, #000 64.5%, transparent 66%);
+  opacity: calc(0.35 + var(--nivel) * 0.65);
+  animation: orb-spin 14s linear infinite;
+}
+
+.orb-logo {
+  position: relative;
+  width: 82%;
+  transform: scale(calc(1 + var(--nivel) * 0.12)); /* pulsa no ritmo da voz */
+  filter: drop-shadow(0 0 calc(10px + var(--nivel) * 34px) rgba(143, 107, 255, calc(0.45 + var(--nivel) * 0.5)));
+}
+
+.orb-status {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.voice-orb .when-speaking,
+.voice-orb[data-falando='sim'] .when-listening {
+  display: none;
+}
+
+.voice-orb[data-falando='sim'] .when-speaking {
+  display: inline;
+  color: var(--text);
+}
+
+.orb-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.orb-buttons button {
+  padding: 10px 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-strong);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.orb-buttons .orb-stop {
+  border-color: transparent;
+  background: var(--pink);
+  color: #fff;
+  font-weight: 600;
+}
+
+@keyframes orb-breathe {
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .orb-halo {
+    animation: none;
+  }
+}
+
+/* O resto do app some e o chat vai para a direita (a classe fica no <body> enquanto o modo voz está aberto) */
+body.voice-mode .robot,
+body.voice-mode .linnea-toast, /* avisos no canto: no modo voz cobririam o chat */
+body.voice-mode .before-after,
+body.voice-mode .app > :not(.topbar):not(.left-column),
+body.voice-mode .left-column > :not(.chat) {
+  display: none;
+}
+
+body.voice-mode .left-column {
+  position: fixed;
+  top: 58px;
+  right: 16px;
+  bottom: 18px;
+  width: var(--chat-w);
+}
+
+/* Botão flutuante para voltar ao modo voz (quando você foi "Ver o app" com a conversa ainda ligada) */
+.voice-return {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 6;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--gradient);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(110, 80, 255, 0.4);
+  cursor: pointer;
+}
+
+.voice-return img {
+  width: 20px;
+  height: 20px;
+}
+
+/* Celular: a logo em cima e a conversa embaixo */
+@media (max-width: 768px) {
+  .voice-orb {
+    right: 0;
+    bottom: auto;
+    height: 42vh;
+    gap: 14px;
+  }
+
+  .orb {
+    width: min(26vh, 60vw);
+  }
+
+  body.voice-mode .left-column {
+    top: 42vh;
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
+  }
+}

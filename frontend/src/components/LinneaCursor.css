@@ -1,0 +1,66 @@
+/* Cursor da Linnea: a ponta da seta fica exatamente no ponto (0,0); o JS move com translate */
+.linnea-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: none; /* nunca atrapalha os cliques do usuário */
+  opacity: 0;
+  transition: transform 0.75s cubic-bezier(0.22, 0.9, 0.24, 1), opacity 0.3s;
+  filter: drop-shadow(0 0 8px rgba(143, 107, 255, 0.7)) drop-shadow(0 2px 6px rgba(20, 20, 60, 0.35));
+}
+
+.linnea-cursor.visible {
+  opacity: 1;
+}
+
+.linnea-cursor svg {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  transition: transform 0.14s;
+}
+
+/* "Clique": a seta afunda um pouco e um anel se espalha */
+.linnea-cursor.clicking svg {
+  transform: scale(0.82);
+}
+
+.cursor-label {
+  position: absolute;
+  top: 26px;
+  left: 20px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--gradient);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cursor-ripple {
+  position: absolute;
+  top: -14px;
+  left: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #8f6bff;
+  opacity: 0;
+}
+
+.linnea-cursor.clicking .cursor-ripple {
+  animation: cursor-ripple 0.5s ease-out;
+}
+
+@keyframes cursor-ripple {
+  from {
+    opacity: 0.9;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}

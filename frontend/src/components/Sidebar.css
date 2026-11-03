@@ -1,0 +1,38 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
+  border-right: 1px solid var(--line);
+}
+
+.sidebar-item {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sidebar-icon);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.sidebar-item:hover {
+  background: var(--hover);
+}
+
+/* Botão de tema fica no pé da barra lateral */
+.theme-toggle {
+  margin-top: auto;
+  margin-bottom: 4px;
+  border: 1px solid var(--line);
+}
+
+.sidebar-item.active {
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(110, 110, 255, 0.35);
+}

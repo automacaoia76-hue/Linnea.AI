@@ -1,0 +1,316 @@
+/* ---- Robô no modo saúde do PC: desliza para o meio (entre o chat e o painel) ---- */
+.robot {
+  transition: right 1s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.robot-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.robot.focus {
+  right: calc(31.5vw - 21px);
+  width: 37vw; /* no modo foco, a área volta ao tamanho do quadro: o fone fica bem no meio dela */
+}
+
+/* No zoom do fone, as bordas da área do robô esfumaçam (sem cortes retos nos lados) */
+.robot.focus canvas {
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 70%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 70%, transparent 100%);
+}
+
+/* Anel grande em cima do fone (a câmera deixa a cabeça no meio da tela) */
+.health-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 230px;
+  height: 230px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(10, 16, 44, 0.78) 55%, rgba(10, 16, 44, 0) 72%);
+  color: #fff;
+  pointer-events: none; /* o clique passa para o robô (clicar no fone de novo volta) */
+  animation: ring-in 0.6s ease-out 0.9s both; /* aparece depois que a câmera chega */
+}
+
+.health-ring svg {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 0 10px rgba(110, 150, 255, 0.7));
+}
+
+.ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 10;
+}
+
+.ring-progress {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 110px 110px;
+  transition: stroke-dasharray 1s ease-out;
+}
+
+.ring-progress.spinning {
+  animation: ring-spin 1s linear infinite;
+}
+
+.ring-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.ring-center svg {
+  position: static;
+  filter: none;
+  color: #8fd8ff;
+}
+
+.ring-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.ring-center strong {
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ring-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.ring-status .status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  animation: none;
+  box-shadow: none;
+}
+
+@keyframes ring-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+}
+
+@keyframes ring-spin {
+  to {
+    transform: rotate(270deg);
+  }
+}
+
+/* ---- Painel "Configurações do PC" à direita ---- */
+.pc-health {
+  position: fixed;
+  top: 58px;
+  right: 24px;
+  bottom: 18px;
+  z-index: 3;
+  width: min(400px, 30vw);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 16px;
+  animation: panel-in 0.6s ease-out 0.5s both;
+}
+
+.pc-health::-webkit-scrollbar {
+  display: none;
+}
+
+.health-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.health-header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.health-header .map-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.health-loading {
+  margin: auto;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.health-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--metric-card);
+}
+
+.row-icon {
+  flex-shrink: 0;
+  color: var(--blue);
+}
+
+.row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.row-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.row-detail {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.row-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra de uso: o trilho é um tom mais claro da mesma cor do preenchimento */
+.meter {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--meter) 18%, transparent);
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--meter);
+  transition: width 0.8s ease-out;
+}
+
+.meter.ok {
+  --meter: var(--blue);
+}
+.meter.warning {
+  --meter: #eda100;
+}
+.meter.danger {
+  --meter: var(--pink);
+}
+
+.meter-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.temp-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.temp-pair strong {
+  color: var(--text);
+}
+
+.health-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid;
+}
+
+.health-status div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.health-status strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.health-status.good {
+  border-color: color-mix(in srgb, var(--green) 45%, transparent);
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  color: var(--green);
+}
+
+.health-status.warn {
+  border-color: color-mix(in srgb, #eda100 50%, transparent);
+  background: color-mix(in srgb, #eda100 10%, transparent);
+  color: #eda100;
+}
+
+.health-checked {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .robot,
+  .health-ring,
+  .pc-health,
+  .ring-progress {
+    transition: none;
+    animation: none;
+  }
+}

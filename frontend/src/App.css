@@ -1,0 +1,130 @@
+/* Fundo de pontinhos cobrindo a tela inteira, atrás de tudo */
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Robô no lado direito da tela. O robô em si ocupa os 37vw da direita (FRAME_VW no Robot.jsx);
+   os 8vw a mais na esquerda são só para os arquivos do carrossel não serem cortados */
+.robot {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 45vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+.background canvas,
+.robot canvas {
+  display: block;
+}
+
+/* Brilho em volta do robô (segue o contorno, porque o fundo do canvas é transparente)
+   e esmaecido embaixo, para o corpo "sumir" na altura do quadril como na referência */
+.robot canvas {
+  filter: drop-shadow(0 0 14px rgba(110, 150, 255, 0.55)) drop-shadow(0 0 30px rgba(255, 110, 210, 0.25));
+  mask-image: linear-gradient(to bottom, #000 72%, transparent 97%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 97%);
+}
+
+/* No tema escuro, brilho em violeta e magenta (mais saturado) */
+:root[data-theme='dark'] .robot canvas {
+  filter: drop-shadow(0 0 14px rgba(90, 70, 255, 0.55)) drop-shadow(0 0 30px rgba(210, 50, 210, 0.3));
+}
+
+/* Interface: topo + barra lateral + coluna do chat + cards de métricas.
+   Ocupa só a largura das colunas, para não cobrir o robô. */
+.app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 60px var(--chat-w) auto;
+  grid-template-rows: 58px 1fr;
+  column-gap: 16px;
+  padding: 0 0 18px 14px;
+}
+
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* A logo da Linnea (fundo transparente: o brilho do neon aparece sobre o tema) */
+.logo {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 6px rgba(143, 107, 255, 0.55));
+}
+
+/* Selo da Linnea na nuvem: de quando é o retrato do PC que ela está vendo */
+.cloud-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-strong);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* Colunas da tela inicial escondidas enquanto outra tela está aberta */
+.left-column[hidden],
+.right-column[hidden] {
+  display: none;
+}
+
+.left-column .chat {
+  flex: 1;
+}
+
+/* Painel de "vidro fosco" reaproveitado pelos componentes */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* Coluna da direita: cards de métricas e, embaixo, o painel de raciocínio */
+.right-column {
+  width: var(--side-w); /* largura fixa da coluna: a tabela não pode esticar a coluna */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* Brilho em volta do robô na cor da aura escolhida nas Configurações ("Padrão" usa o brilho de cada tema, acima).
+   O ":root" na frente deixa estas regras com a mesma força das do tema escuro; como vêm depois, elas ganham. */
+:root .robot.aura-azul canvas {
+  filter: drop-shadow(0 0 14px rgba(63, 169, 255, 0.6)) drop-shadow(0 0 30px rgba(47, 91, 255, 0.3));
+}
+:root .robot.aura-verde canvas {
+  filter: drop-shadow(0 0 14px rgba(61, 255, 176, 0.55)) drop-shadow(0 0 30px rgba(31, 200, 255, 0.28));
+}
+:root .robot.aura-rosa canvas {
+  filter: drop-shadow(0 0 14px rgba(255, 107, 213, 0.55)) drop-shadow(0 0 30px rgba(168, 107, 255, 0.3));
+}
+:root .robot.aura-dourado canvas {
+  filter: drop-shadow(0 0 14px rgba(255, 211, 107, 0.55)) drop-shadow(0 0 30px rgba(255, 138, 61, 0.3));
+}

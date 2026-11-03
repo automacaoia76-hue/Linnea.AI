@@ -1,0 +1,176 @@
+/* Cartão do plano do agente (dentro da resposta da Linnea) */
+.plan-card {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--purple) 40%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--purple) 8%, transparent);
+  font-size: 12px;
+}
+
+.plan-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.plan-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--purple);
+}
+
+.plan-total {
+  font-weight: 600;
+}
+
+.plan-card ol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  transition: opacity 0.3s;
+}
+
+.plan-card li div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.plan-card li span {
+  color: var(--text-muted);
+}
+
+.plan-card li strong {
+  font-weight: 600;
+}
+
+.plan-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.plan-card li.feito .plan-icon {
+  background: var(--green);
+  color: #fff;
+}
+
+.plan-card li.pulado {
+  opacity: 0.55;
+}
+
+.plan-card li.pulado strong {
+  text-decoration: line-through;
+}
+
+/* Passo sendo feito agora: anel girando */
+.plan-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid color-mix(in srgb, var(--purple) 30%, transparent);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  animation: plan-spin 0.8s linear infinite;
+}
+
+.plan-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.plan-buttons button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.plan-cancel {
+  border: 1px solid var(--line);
+  background: transparent;
+}
+
+.plan-run {
+  border: none;
+  background: var(--gradient);
+  color: #fff;
+  font-weight: 600;
+}
+
+.plan-buttons button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.plan-note {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+
+.plan-note.done {
+  color: var(--green);
+  font-weight: 600;
+}
+
+@keyframes plan-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-spinner {
+    animation: none;
+  }
+}
+
+/* Botão "Executar plano do agente" na tela inicial (embaixo dos cards, compacto) */
+.plan-launch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--gradient);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(110, 110, 255, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.plan-launch:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(110, 110, 255, 0.4);
+}
+
+.plan-launch:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -1,0 +1,625 @@
+/* Tela Gráficos: mesmo lugar e tamanho das telas Arquivos e Configurações; as seções rolam */
+.charts {
+  grid-column: 2 / 4;
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 16px 18px;
+  box-sizing: border-box;
+
+  /* Cores das categorias (paleta validada; a mesma categoria sempre com a mesma cor) */
+  --cat-1: #2a78d6;
+  --cat-2: #eb6834;
+  --cat-3: #1baf7a;
+  --cat-4: #eda100;
+  --cat-5: #e87ba4;
+  --cat-6: #008300;
+  --cat-7: #4a3aa7;
+  --cat-others: #b8bfd4;
+  --cat-system: #d9deea;
+}
+
+:root[data-theme='dark'] .charts {
+  --cat-1: #3987e5;
+  --cat-2: #d95926;
+  --cat-3: #199e70;
+  --cat-4: #c98500;
+  --cat-5: #d55181;
+  --cat-6: #008300;
+  --cat-7: #9085e9;
+  --cat-others: #4a5578;
+  --cat-system: #2c3556;
+}
+
+.charts::-webkit-scrollbar {
+  display: none;
+}
+
+/* Com o chat à esquerda: fica no lugar dos cards, sem encostar no robô */
+.charts.with-chat {
+  grid-column: 3;
+  width: var(--panel-chat-w);
+}
+
+.charts-header,
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.charts-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.charts-header p,
+.section-header p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.history-toggle {
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--metric-button);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.history-toggle:hover {
+  background: var(--hover);
+}
+
+/* Números de destaque: o espaço livre é o grande; os outros dois ficam ao lado */
+.charts-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--metric-card);
+}
+
+.stat-hero {
+  grid-column: 1 / -1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.hero-value {
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.stat-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.hero-change.up {
+  color: var(--green);
+}
+
+.hero-change.down {
+  color: var(--pink);
+}
+
+.section-empty {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Cada bloco (linha, rosca, ranking, calendário) */
+.chart-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+/* Gráfico de linha */
+.history-chart {
+  position: relative;
+  height: 220px;
+  flex-shrink: 0;
+}
+
+.history-chart svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  outline: none;
+}
+
+.history-chart svg:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.history-chart .grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.history-chart .axis {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-chart .line {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.history-chart .area {
+  fill: var(--blue);
+  opacity: 0.1;
+}
+
+.history-chart .crosshair {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+/* Ponto com um anel da cor do fundo, para destacar em cima da linha */
+.history-chart .dot {
+  fill: var(--blue);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.history-chart .end-label {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.history-tooltip {
+  position: absolute;
+  transform: translate(12px, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Perto da borda direita, a dica abre para a esquerda */
+.history-tooltip.left {
+  transform: translate(calc(-100% - 12px), -50%);
+}
+
+.history-tooltip strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.history-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Tabela (mesmos números do gráfico, para quem prefere ler) */
+.history-table {
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.history-table::-webkit-scrollbar {
+  display: none;
+}
+
+.history-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th {
+  padding: 4px 8px;
+  font-weight: 400;
+  text-align: left;
+  color: var(--text-muted);
+}
+
+.history-table td {
+  padding: 6px 8px;
+  border-top: 1px solid var(--line);
+}
+
+.history-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Rosca ---- */
+.donut-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.donut {
+  width: 170px;
+  height: 170px;
+  flex-shrink: 0;
+}
+
+.donut circle {
+  transition: stroke-width 0.2s;
+  cursor: pointer;
+}
+
+.donut-value {
+  fill: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.donut-caption {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.donut-legend {
+  flex: 1;
+  min-width: 200px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.donut-legend li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.donut-legend li.active {
+  background: var(--hover);
+}
+
+/* A cor fica no marcador; o texto fica na cor do texto */
+.legend-key {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.legend-value,
+.legend-percent {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend-percent {
+  color: var(--text-muted);
+}
+
+/* ---- Ranking ---- */
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.ranking li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 68px;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ranking-track {
+  height: 10px;
+}
+
+.ranking-bar {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 0 4px 4px 0; /* ponta arredondada, base reta */
+  background: var(--blue);
+}
+
+.ranking-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* ---- Calendário ---- */
+.calendar {
+  display: flex;
+  gap: 3px;
+}
+
+.calendar-weekdays,
+.calendar-week {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3px;
+}
+
+.calendar-weekdays span {
+  width: 12px;
+  font-size: 9px;
+  line-height: 12px;
+  color: var(--text-muted);
+}
+
+.calendar-day {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.calendar-day.future {
+  background: transparent;
+}
+
+/* Um tom só (roxo), do claro ao escuro */
+.calendar-day.level-1 {
+  background: color-mix(in srgb, var(--purple) 30%, var(--line));
+}
+.calendar-day.level-2 {
+  background: color-mix(in srgb, var(--purple) 55%, var(--line));
+}
+.calendar-day.level-3 {
+  background: color-mix(in srgb, var(--purple) 80%, var(--line));
+}
+.calendar-day.level-4 {
+  background: var(--purple);
+}
+
+.calendar-scale {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.calendar-scale .calendar-day {
+  margin: 0 1px;
+}
+
+.recent-title {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recent-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.recent-list li {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  color: var(--text-muted);
+}
+
+.recent-list strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Relatório do mês ---- */
+.report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 8, 25, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+/* Folha "de papel": sempre clara, para ficar igual na tela e no PDF */
+.report-sheet {
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 32px;
+  border-radius: 18px;
+  background: #fff;
+  color: #1c2340;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.report-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e3e7f2;
+}
+
+.report-logo {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f9dff 0%, #8f6bff 60%, #e46bd8 100%);
+  color: #fff;
+}
+
+.report-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.report-head p,
+.report-status {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #6b7394;
+}
+
+.report-sheet h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7b55e0;
+}
+
+.report-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.report-numbers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.report-numbers div {
+  padding: 10px 12px;
+  border: 1px solid #e3e7f2;
+  border-radius: 10px;
+}
+
+.report-numbers dt {
+  font-size: 11px;
+  color: #6b7394;
+}
+
+.report-numbers dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.report-actions-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Na impressão (Salvar como PDF): só o relatório, sem o app por trás e sem os botões */
+@media print {
+  #root {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .report-overlay {
+    position: static;
+    padding: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+
+  .report-sheet {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .report-actions {
+    display: none;
+  }
+}

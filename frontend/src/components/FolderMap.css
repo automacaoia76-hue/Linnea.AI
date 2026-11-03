@@ -1,0 +1,659 @@
+/* Tela Arquivos: ocupa o lugar das duas colunas da tela inicial (o robô continua à direita) */
+.folder-map {
+  grid-column: 2 / 4;
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px 14px 8px;
+  box-sizing: border-box;
+}
+
+/* Com o chat à esquerda: o mapa fica no lugar dos cards, um pouco mais largo, sem encostar no robô */
+.folder-map.with-chat {
+  grid-column: 3;
+  width: var(--panel-chat-w);
+}
+
+.map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px 10px;
+}
+
+/* Trilha: Pastas pessoais › Downloads › Jogos */
+.map-trail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.map-trail button {
+  border: none;
+  background: none;
+  padding: 3px 6px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.map-trail button:hover {
+  background: var(--hover);
+}
+
+.map-trail button:last-child {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.map-sep {
+  color: var(--text-muted);
+}
+
+.map-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple);
+  white-space: nowrap;
+}
+
+.map-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.map-area {
+  position: absolute;
+  inset: 0;
+}
+
+/* Enquanto mede a pasta nova, o mapa antigo fica apagadinho */
+.map-area.loading .tile {
+  opacity: 0.35;
+}
+
+.tile {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 8px 10px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--tile) 45%, transparent);
+  background: color-mix(in srgb, var(--tile) 18%, transparent);
+  color: var(--text);
+  text-align: left;
+  font-size: 12px;
+  transition: background 0.2s, opacity 0.3s, transform 0.2s;
+  animation: tile-in 0.35s ease-out both;
+}
+
+.tile.clickable {
+  cursor: pointer;
+}
+
+/* Quadradinho pequeno demais para texto: sem espaçamento interno, para não passar do tamanho certo */
+.tile.small {
+  padding: 0;
+  border-radius: 6px;
+}
+
+.tile.clickable:hover {
+  background: color-mix(in srgb, var(--tile) 32%, transparent);
+  transform: scale(0.985);
+}
+
+.tile.blue {
+  --tile: var(--blue);
+}
+.tile.purple {
+  --tile: var(--purple);
+}
+.tile.pink {
+  --tile: var(--pink);
+}
+.tile.green {
+  --tile: var(--green);
+}
+.tile.gray {
+  --tile: var(--text-muted);
+}
+
+.tile-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tile-name svg {
+  flex-shrink: 0;
+  color: var(--tile);
+}
+
+.tile-size {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.map-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.map-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px; /* mesma altura com ou sem os botões, para o mapa não pular */
+  padding: 6px 4px 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    animation: none;
+  }
+}
+
+/* Item marcado para ir para a Lixeira */
+.tile.selected {
+  border: 2px solid var(--pink);
+  background: color-mix(in srgb, var(--pink) 26%, transparent);
+}
+
+.tile-check {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--pink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Barra de baixo quando há itens marcados */
+.map-selection {
+  display: flex;
+  flex-wrap: wrap; /* no mapa estreito, os botões descem para a linha de baixo */
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px 8px;
+  width: 100%;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.map-selection > span:first-child {
+  margin-right: auto;
+}
+
+.map-confirm {
+  color: var(--text-muted);
+}
+
+.map-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--metric-button);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.map-btn:hover {
+  background: var(--hover);
+}
+
+.map-btn.danger {
+  border-color: transparent;
+  background: var(--pink);
+  color: #fff;
+}
+
+.map-btn.danger:hover {
+  background: color-mix(in srgb, var(--pink) 85%, #000);
+}
+
+.map-btn.ask {
+  border-color: transparent;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.map-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Resultado da última ida para a Lixeira */
+.map-message {
+  color: var(--green);
+}
+
+/* ---- Abas, busca e listas ---- */
+.map-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.map-tabs button {
+  padding: 5px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.map-tabs button:hover {
+  background: var(--hover);
+}
+
+.map-tabs button[aria-selected='true'] {
+  border-color: var(--line);
+  background: var(--metric-button);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.map-search {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.map-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--metric-button);
+  font-size: 12px;
+  outline: none;
+}
+
+.map-search input:focus {
+  border-color: var(--purple);
+}
+
+.map-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Na lista, a área rola (no mapa os quadradinhos sempre cabem) */
+.map-area.list {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.map-area.list::-webkit-scrollbar {
+  display: none;
+}
+
+.map-area.loading .file-row {
+  opacity: 0.4;
+}
+
+.file-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 64px 70px 26px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.file-row:hover {
+  background: var(--hover);
+}
+
+.file-row.selected {
+  background: color-mix(in srgb, var(--pink) 16%, transparent);
+}
+
+.file-row:focus-visible {
+  outline: 2px solid var(--purple);
+}
+
+.row-check {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 1.5px solid color-mix(in srgb, var(--tile) 70%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.row-check.blue {
+  --tile: var(--blue);
+}
+.row-check.purple {
+  --tile: var(--purple);
+}
+.row-check.pink {
+  --tile: var(--pink);
+}
+.row-check.green {
+  --tile: var(--green);
+}
+.row-check.gray {
+  --tile: var(--text-muted);
+}
+
+.file-row.selected .row-check {
+  border-color: var(--pink);
+  background: var(--pink);
+}
+
+.row-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.row-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.row-size,
+.row-date {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.row-preview {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+button.row-preview:hover {
+  background: var(--hover);
+}
+
+/* Etiqueta do arquivo: texto na cor do texto, a cor fica só no fundo e no pontinho */
+.file-label {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--label) 16%, transparent);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.file-label::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--label);
+}
+
+.file-label.green {
+  --label: var(--green);
+}
+.file-label.purple {
+  --label: var(--purple);
+}
+.file-label.pink {
+  --label: var(--pink);
+}
+.file-label.blue {
+  --label: var(--blue);
+}
+
+/* Etiqueta dentro do quadradinho do mapa: no topo */
+.tile .file-label {
+  margin-bottom: auto;
+}
+
+/* ---- Prévia ---- */
+.file-preview {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  animation: tile-in 0.25s ease-out;
+}
+
+.file-preview header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-preview header div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.file-preview header strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+
+.file-preview header span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.preview-media {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  border: none;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.preview-audio {
+  width: 100%;
+  margin: auto 0;
+}
+
+/* ---- Arrastar até o robô ---- */
+.robot-drop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 30;
+  width: 37vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.drop-ring {
+  width: 260px;
+  height: 260px;
+  display: grid;
+  place-items: center;
+  padding: 30px;
+  box-sizing: border-box;
+  border: 2px dashed var(--purple);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(143, 107, 255, 0.25), transparent 70%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  animation: drop-pulse 1.2s ease-in-out infinite;
+  pointer-events: none; /* quem recebe o "soltar" é a área inteira */
+}
+
+.drop-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 300px;
+  padding: 14px 16px;
+  background: var(--glass-strong);
+  font-size: 13px;
+}
+
+.drop-confirm span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.drop-confirm div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* O arquivo "entrando" no robô: encolhe e some na direção do peito */
+.drop-eaten {
+  max-width: 240px;
+  padding: 8px 14px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--gradient);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  animation: robot-eat 0.9s ease-in forwards;
+}
+
+@keyframes drop-pulse {
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes robot-eat {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(-40px) scale(0.6) rotate(-8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-90px) scale(0) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop-ring,
+  .drop-eaten {
+    animation: none;
+  }
+}
+
+/* Caminho sendo digitado pela Linnea */
+.map-typing {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.typing-caret {
+  width: 2px;
+  height: 14px;
+  margin-left: 2px;
+  background: var(--purple);
+  animation: caret-blink 0.8s steps(1) infinite;
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Botão "Revisar etiquetas com a Linnea" ao lado da dica da lista */
+.map-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+}

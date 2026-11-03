@@ -1,0 +1,103 @@
+/* Recorte iluminado: o próprio recorte é transparente e a sombra enorme escurece todo o resto */
+.tour-spotlight {
+  position: fixed;
+  z-index: 40;
+  border-radius: 22px;
+  box-shadow:
+    0 0 0 2px rgba(143, 107, 255, 0.85),
+    0 0 24px 4px rgba(143, 107, 255, 0.45),
+    0 0 0 200vmax rgba(5, 8, 25, 0.55);
+  pointer-events: none;
+  animation: tour-fade 0.35s ease-out;
+}
+
+/* Sem peça para destacar: só escurece */
+.tour-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(5, 8, 25, 0.55);
+  pointer-events: none;
+  animation: tour-fade 0.35s ease-out;
+}
+
+.tour-bubble {
+  position: fixed;
+  z-index: 45;
+  width: 300px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 12px;
+  background: var(--glass-strong);
+  animation: tour-pop 0.3s ease-out;
+}
+
+.tour-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--purple);
+}
+
+.tour-bubble strong {
+  font-size: 15px;
+}
+
+.tour-bubble p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.tour-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.tour-buttons button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tour-skip {
+  border: 1px solid var(--line);
+  background: transparent;
+}
+
+.tour-skip:hover {
+  background: var(--hover);
+}
+
+.tour-next {
+  border: none;
+  background: var(--gradient);
+  color: #fff;
+  font-weight: 600;
+}
+
+@keyframes tour-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes tour-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight,
+  .tour-dim,
+  .tour-bubble {
+    animation: none;
+  }
+}

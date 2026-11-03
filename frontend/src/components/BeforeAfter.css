@@ -1,0 +1,105 @@
+/* Card "Antes e depois" no canto superior direito (o mesmo lugar dos avisos da Linnea) */
+.before-after {
+  position: fixed;
+  top: 66px;
+  right: 24px;
+  z-index: 35;
+  width: 330px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--glass-strong);
+  font-size: 12px;
+  animation: ba-in 0.4s cubic-bezier(0.22, 0.9, 0.24, 1);
+}
+
+.before-after header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.before-after header strong {
+  font-size: 13px;
+}
+
+.before-after header button {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.ba-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 46px;
+  align-items: center;
+  gap: 8px;
+}
+
+.ba-label {
+  color: var(--text-muted);
+}
+
+.ba-value {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra de uso do disco: o trilho é um tom mais claro da mesma cor */
+.ba-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--meter) 18%, transparent);
+}
+
+.ba-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--meter);
+}
+
+.ba-bar .shrinking {
+  transition: width 1.4s cubic-bezier(0.22, 0.9, 0.24, 1) 0.3s;
+}
+
+.ba-bar.ok {
+  --meter: var(--blue);
+}
+.ba-bar.warning {
+  --meter: #eda100;
+}
+.ba-bar.danger {
+  --meter: var(--pink);
+}
+
+.ba-summary {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+}
+
+.ba-summary strong {
+  color: var(--text);
+}
+
+@keyframes ba-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .before-after,
+  .ba-bar .shrinking {
+    animation: none;
+    transition: none;
+  }
+}

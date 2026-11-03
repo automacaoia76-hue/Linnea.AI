@@ -1,17 +1,21 @@
-# Python-generated files
+# Segredos (chaves de API)
+.env
+.env.*
+
+# Pastas pessoais / fora do projeto
+modelos-3d/
+memoria/
+clarix/
+.agents/
+.obsidian/
+.claude/
+
+# Lixo do sistema
+.DS_Store
+Thumbs.db
+
+# Dependências e arquivos gerados
+node_modules/
 __pycache__/
 *.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-
-# Dados gerados pelo app (scan, histórico, configurações, limpezas): pessoais, não vão para o git
-data/
-
-# Gerados ao criar o Linnea.AI.exe (build_exe.py)
-projeto.txt
-*.spec
+*.log

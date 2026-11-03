@@ -1,0 +1,54 @@
+/* Faixinha no topo, ao lado do nome do app */
+.linnea-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 14px;
+  padding: 5px 12px 5px 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.linnea-status.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.linnea-status strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Pontinho que pulsa enquanto ela trabalha */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gradient);
+  box-shadow: 0 0 0 0 rgba(143, 107, 255, 0.6);
+  animation: status-pulse 1.4s ease-out infinite;
+}
+
+@keyframes status-pulse {
+  70% {
+    box-shadow: 0 0 0 7px rgba(143, 107, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(143, 107, 255, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-dot {
+    animation: none;
+  }
+}

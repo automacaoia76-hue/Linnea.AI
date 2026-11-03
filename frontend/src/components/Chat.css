@@ -1,0 +1,359 @@
+/* Chat compacto, no estilo ChatGPT/Claude: textos menores, respostas sem caixa, ações em "chips" */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 18px 16px;
+  min-height: 0; /* deixa a lista de mensagens rolar dentro do painel */
+  font-size: 13.5px;
+}
+
+/* Cabeçalho */
+.chat-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+}
+
+.chat-header p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.gradient-text {
+  background: var(--gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Lista de mensagens */
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 4px 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.bubble {
+  line-height: 1.55;
+}
+
+.bubble p {
+  margin: 0;
+}
+
+.bubble-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+/* Sua mensagem: balão pequeno à direita */
+.bubble-user {
+  align-self: flex-end;
+  max-width: 80%;
+  padding: 8px 12px 6px;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--bubble-user);
+  border: 1px solid var(--bubble-user-border);
+}
+
+.bubble-user .bubble-time {
+  justify-content: flex-end;
+}
+
+.read-check {
+  color: var(--blue);
+}
+
+/* Resposta da Linnea: sem caixa, só um avatar pequeno e o texto */
+.agent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.agent-avatar {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.agent-avatar svg {
+  width: 13px;
+  height: 13px;
+}
+
+.bubble-agent {
+  flex: 1;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+/* Ações sugeridas: chips pequenos e arredondados */
+.chat-suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat-suggestions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-strong);
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.chat-suggestions button:hover {
+  background: var(--hover);
+  border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+}
+
+.suggestion-icon {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.suggestion-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.suggestion-icon.blue {
+  background: linear-gradient(135deg, #4fa3ff, #6a7bff);
+}
+
+.suggestion-icon.pink {
+  background: linear-gradient(135deg, #f07bd0, #c06bff);
+}
+
+.suggestion-icon.sky {
+  background: linear-gradient(135deg, #5ab8ff, #5f86ff);
+}
+
+/* Campo de envio: fino, com botão redondo pequeno */
+.chat-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 14px;
+  background: var(--glass-strong);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus-within {
+  border-color: color-mix(in srgb, var(--blue) 55%, transparent);
+}
+
+.chat-input input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+}
+
+.chat-input input::placeholder {
+  color: var(--text-muted);
+}
+
+.chat-input button {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--gradient);
+  color: #fff;
+  cursor: pointer;
+}
+
+.chat-input button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Botão da conversa por voz: discreto desligado; ligado, pulsa enquanto escuta */
+.chat-input .mic-button {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.chat-input .mic-button:hover {
+  color: var(--text);
+}
+
+.chat-input .mic-button.connecting {
+  color: var(--text);
+  opacity: 0.6;
+}
+
+.chat-input .mic-button.on {
+  background: var(--pink);
+  color: #fff;
+  animation: mic-pulse 1.6s ease-out infinite;
+}
+
+@keyframes mic-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pink) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-input .mic-button.on {
+    animation: none;
+  }
+}
+
+/* Texto da Linnea com formatação (títulos, negrito, listas) */
+.message-text p {
+  margin: 0 0 6px;
+}
+
+.message-text p:last-child,
+.message-text ul:last-child {
+  margin-bottom: 0;
+}
+
+.message-text h4 {
+  margin: 10px 0 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.message-text h4:first-child {
+  margin-top: 0;
+}
+
+.message-text ul {
+  margin: 2px 0 6px;
+  padding-left: 18px;
+}
+
+.message-text li {
+  margin: 2px 0;
+}
+
+.message-text code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--hover);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.message-text table {
+  width: 100%;
+  margin: 4px 0 8px;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.message-text td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Etiqueta quando a Linnea usou a ferramenta de scan */
+.tool-tag {
+  display: inline-flex;
+  margin-bottom: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--hover);
+  font-size: 11px;
+  color: var(--blue);
+}
+
+/* Aviso de erro (servidor desligado, IA ocupada...) */
+.bubble-error .message-text {
+  color: var(--pink);
+}
+
+/* "Linnea está pensando": três pontinhos pulando */
+.typing {
+  display: flex;
+  gap: 4px;
+  padding-top: 10px;
+}
+
+.typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Botões bloqueados enquanto a Linnea responde */
+.chat-suggestions button:disabled,
+.chat-input button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+/* Linha de ação: o que a Linnea fez na tela ("↳ destaquei o card Lixo") */
+.action-line {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  color: var(--purple);
+  animation: action-in 0.4s ease;
+}
+
+@keyframes action-in {
+  from { opacity: 0; transform: translateX(-4px); }
+}

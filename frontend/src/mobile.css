@@ -1,0 +1,118 @@
+/* ---- Modo leve: sem robô 3D e sem fundo animado (o App nem carrega os dois) ---- */
+
+/* Fundo fixo no lugar dos pontinhos animados: o mesmo clima de cor, sem gastar nada */
+body.lite {
+  background:
+    radial-gradient(circle at 85% 15%, rgba(143, 107, 255, 0.18), transparent 45%),
+    radial-gradient(circle at 10% 90%, rgba(79, 157, 255, 0.14), transparent 45%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* ---- Celular: uma coluna só, com as abas embaixo ---- */
+
+@media (max-width: 768px) {
+  /* As larguras das colunas viram "a tela toda" (as telas usam essas variáveis) */
+  :root {
+    --chat-w: 100%;
+    --side-w: 100%;
+    --panel-w: 100%;
+    --panel-chat-w: 100%;
+  }
+
+  .app {
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 10px 76px; /* embaixo: espaço das abas */
+    overflow-y: auto;
+  }
+
+  .topbar {
+    flex: none;
+    height: 52px;
+    padding-left: 2px;
+  }
+
+  .cloud-chip {
+    margin-left: auto;
+    font-size: 11px;
+  }
+
+  /* A barra lateral vira as abas no pé da tela */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    height: 62px;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0 8px env(safe-area-inset-bottom);
+    border-right: none;
+    border-top: 1px solid var(--line);
+    background: var(--glass-strong);
+    backdrop-filter: blur(16px);
+  }
+
+  .theme-toggle {
+    margin: 0;
+  }
+
+  /* Início: os cards em cima, o chat embaixo (o que pesa ou não cabe some) */
+  .right-column {
+    order: 1;
+    flex: none;
+  }
+
+  .left-column {
+    order: 2;
+    flex: none;
+  }
+
+  .left-column .chat {
+    height: 72vh;
+    flex: none;
+  }
+
+  .right-column .reasoning,
+  .right-column .files,
+  .plan-launch {
+    display: none;
+  }
+
+  /* Outra tela aberta (Gráficos, Configurações, Saúde): ela ocupa tudo e o chat sai da frente */
+  .app:not(.screen-inicio) .left-column {
+    display: none;
+  }
+
+  .charts,
+  .settings,
+  .folder-map {
+    flex: 1;
+    min-height: auto;
+    overflow: visible;
+    padding: 14px 12px;
+  }
+
+  .pc-health {
+    position: static;
+    width: 100%;
+    animation: none;
+  }
+
+  .start-scan {
+    flex: 1;
+  }
+
+  /* No modo voz o chat aparece mesmo com outra tela aberta (o VoiceOrb.css posiciona) */
+  body.voice-mode .app .left-column {
+    display: flex;
+  }
+
+  body.voice-mode .app {
+    overflow: hidden;
+  }
+}

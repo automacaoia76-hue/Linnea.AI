@@ -1,0 +1,332 @@
+/* Tela Configurações: mesmo lugar e tamanho das telas Arquivos e Gráficos */
+.settings {
+  grid-column: 2 / 4;
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 16px 18px;
+  box-sizing: border-box;
+}
+
+.settings::-webkit-scrollbar {
+  display: none;
+}
+
+.settings.with-chat {
+  grid-column: 3;
+  width: var(--panel-chat-w);
+}
+
+.settings-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings-header p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.settings-group h3 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--purple);
+}
+
+/* Uma opção: texto em cima, controles embaixo (cabe no painel estreito ao lado do chat) */
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.setting:last-child {
+  border-bottom: none;
+}
+
+.setting-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-text strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.setting-text span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Botões lado a lado, como um seletor */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--metric-button);
+}
+
+.segmented button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.segmented button:hover {
+  background: var(--hover);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--gradient);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Vozes: várias linhas de botões, então os cantos ficam menos redondos */
+.segmented.voices {
+  border-radius: 16px;
+}
+
+.segmented button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Bolinhas de cor da aura */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.swatch-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--line);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.swatch:hover .swatch-dot {
+  transform: scale(1.06);
+}
+
+.swatch[aria-pressed='true'] .swatch-dot {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--purple), 0 0 14px rgba(143, 107, 255, 0.5);
+}
+
+.swatch-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.swatch[aria-pressed='true'] .swatch-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.settings-message {
+  margin: 0;
+  font-size: 12px;
+  color: var(--green);
+}
+
+/* Mensagem de erro (as de sucesso começam com ✓ e ficam verdes) */
+.settings-message.error {
+  color: var(--pink);
+}
+
+/* Botão liga/desliga */
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--metric-button);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggle.on {
+  border-color: transparent;
+  background: var(--gradient);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+
+.toggle.on .toggle-knob {
+  transform: translateX(16px);
+}
+
+/* Pastas permitidas (ligada) ou proibidas (desligada) */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: line-through;
+}
+
+.chip[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--green) 50%, transparent);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Lista "nunca apagar" */
+.protected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.protected-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--metric-button);
+}
+
+.protected-list span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.protected-list button {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.protected-add {
+  display: flex;
+  gap: 6px;
+}
+
+.protected-add input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--metric-button);
+  font-size: 12px;
+  outline: none;
+}
+
+.protected-add input:focus {
+  border-color: var(--purple);
+}
+
+/* Memória da Linnea */
+.memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.memory-list li {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--metric-button);
+}
+
+.memory-empty,
+.memory-path {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.memory-path code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--metric-button);
+  color: var(--text);
+}

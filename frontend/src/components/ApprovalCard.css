@@ -1,0 +1,99 @@
+/* Cartão de permissão no chat */
+.approval {
+  --approval-accent: var(--blue);
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--approval-accent) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--approval-accent) 8%, transparent);
+  animation: approval-in 0.35s ease;
+}
+
+/* Ação permanente: tom vermelho */
+.approval.danger {
+  --approval-accent: #f0506e;
+}
+
+.approval-kicker {
+  margin: 0 0 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--approval-accent);
+}
+
+.approval-action + .approval-action {
+  margin-top: 8px;
+}
+
+.approval-action strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.approval-action ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.approval-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--approval-accent);
+}
+
+.approval-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.approval-buttons button {
+  flex: 1;
+  height: 30px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: transform 0.15s, filter 0.2s;
+}
+
+.approval-buttons button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.approval-buttons .approve {
+  border: none;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.approval.danger .approval-buttons .approve {
+  background: linear-gradient(135deg, #f0506e, #c03a8a);
+}
+
+.approval-buttons .reject {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+}
+
+.approval-result {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Depois da decisão, o cartão fica mais apagado */
+.approval.aprovado,
+.approval.recusado {
+  opacity: 0.75;
+}
+
+@keyframes approval-in {
+  from { opacity: 0; transform: translateY(4px); }
+}

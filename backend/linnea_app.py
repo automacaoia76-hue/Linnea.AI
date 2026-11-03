@@ -47,13 +47,29 @@ def start_api() -> threading.Thread:
     return thread
 
 
+class Api:
+    """Funções do Python que a página pode chamar (window.pywebview.api.<nome>)."""
+
+    def tela_cheia(self):
+        webview.windows[0].toggle_fullscreen()
+
+
+# F11 liga/desliga a tela cheia
+F11_JS = """document.addEventListener('keydown', e => {
+  if (e.key === 'F11') { e.preventDefault(); window.pywebview.api.tela_cheia(); }
+});"""
+
+
 def main():
     thread = None if api_on() else start_api()
     if "--so-ligar" in sys.argv:
         if thread:
             thread.join()  # fica ligada até o Windows desligar
         return
-    webview.create_window("Linnea.AI", URL, width=1600, height=900, min_size=(1100, 700), background_color="#05060f")
+    window = webview.create_window(
+        "Linnea.AI", URL, width=1600, height=900, min_size=(1100, 700), background_color="#05060f", js_api=Api()
+    )
+    window.events.loaded += lambda: window.evaluate_js(F11_JS)  # a cada carregamento da página
     # private_mode=False + storage_path: guarda o tema, a cor da aura e a permissão do microfone entre uma vez e outra
     webview.start(private_mode=False, storage_path=str(DATA_DIR / "janela"), icon=str(ICON))
 
